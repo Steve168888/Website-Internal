@@ -46,7 +46,7 @@ const options = {
   },
 };
 
-const Content = () => {
+const Dashboard = () => {
   return (
     <div className="flex flex-col gap-6 p-4">
       {/* Kotak untuk Tabel Transaksi */}
@@ -107,4 +107,4 @@ const Content = () => {
   );
 };
 
-export default Content;
+export default Dashboard;

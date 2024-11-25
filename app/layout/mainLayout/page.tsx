@@ -3,6 +3,7 @@ import Navbar from '../navbar/_components/navbar';
 import Sidebar from '../sidebar/_components/sidebar';
 import Content from '../content/_components/content';
 
+
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
     return (
       <div className="flex h-screen">
@@ -14,6 +15,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
           <div className='mt-5'>
             <Content />
           </div>
+      
         
           <main className="p-6 overflow-y-auto">
             {children}

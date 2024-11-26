@@ -1,6 +1,7 @@
 import React from 'react';
 import { FiUser, FiSettings, FiLogOut, FiDollarSign } from 'react-icons/fi';
 import { AiOutlineDashboard } from 'react-icons/ai';
+import Link from 'next/link';
 
 const Sidebar = () => {
   return (
@@ -13,26 +14,26 @@ const Sidebar = () => {
         </div>
       </div>
       <nav className="mt-4 space-y-2">
-        <a href="#" className="flex items-center space-x-2 p-2 hover:bg-gray-700 rounded">
+        <Link href="/dashboard" className="flex items-center space-x-2 p-2 hover:bg-gray-700 rounded">
           <AiOutlineDashboard className="text-xl" />
           <span>Dashboard</span>
-        </a>
-        <a href="#" className="flex items-center space-x-2 p-2 hover:bg-gray-700 rounded">
+        </Link>
+        <Link href="/users" className="flex items-center space-x-2 p-2 hover:bg-gray-700 rounded">
           <FiUser className="text-xl" />
           <span>Users</span>
-        </a>
-        <a href="#" className="flex items-center space-x-2 p-2 hover:bg-gray-700 rounded">
+        </Link>
+        <Link href="/transactions" className="flex items-center space-x-2 p-2 hover:bg-gray-700 rounded">
           <FiDollarSign className="text-xl" />
           <span>Transactions</span>
-        </a>
-        <a href="#" className="flex items-center space-x-2 p-2 hover:bg-gray-700 rounded">
+        </Link>
+        <Link href="/settings" className="flex items-center space-x-2 p-2 hover:bg-gray-700 rounded">
           <FiSettings className="text-xl" />
           <span>Settings</span>
-        </a>
-        <a href="#" className="flex items-center space-x-2 p-2 hover:bg-gray-700 rounded">
+        </Link>
+        <Link href="/logout" className="flex items-center space-x-2 p-2 hover:bg-gray-700 rounded">
           <FiLogOut className="text-xl" />
           <span>Logout</span>
-        </a>
+        </Link>
       </nav>
     </div>
   );

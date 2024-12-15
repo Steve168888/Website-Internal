@@ -3,7 +3,6 @@ import { useRouter } from "next/router";
 const CampaignList = () => {
   const router = useRouter();
   const { id } = router.query; // Mengambil parameter ID dari URL
-  console.log("Dynamic Route ID:", id);
 
   // Validasi ID
   if (!id) {

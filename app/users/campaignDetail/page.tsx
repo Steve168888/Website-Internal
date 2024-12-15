@@ -1,4 +1,7 @@
 import { FC } from "react";
+import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
+import { FiSend } from "react-icons/fi";
+import { MdOutlineMarkEmailRead } from "react-icons/md";
 
 const CampaignDetail: FC = () => {
   return (
@@ -37,28 +40,32 @@ const CampaignDetail: FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         {/* Delivered */}
         <div className="bg-gray-800 p-4 rounded-lg shadow text-center">
-          <h2 className="text-lg font-bold">DELIVERED</h2>
+          <AiOutlineCheckCircle className="text-green-400 text-4xl mx-auto" />
+          <h2 className="text-lg font-bold mt-4">DELIVERED</h2>
           <p className="text-3xl font-bold mt-4 text-green-400">1</p>
           <p className="mt-2 text-green-400">50.00% Total</p>
         </div>
 
         {/* Read */}
         <div className="bg-gray-800 p-4 rounded-lg shadow text-center">
-          <h2 className="text-lg font-bold">READ</h2>
+          <MdOutlineMarkEmailRead className="text-blue-400 text-4xl mx-auto" />
+          <h2 className="text-lg font-bold mt-4">READ</h2>
           <p className="text-3xl font-bold mt-4 text-blue-400">1</p>
           <p className="mt-2 text-blue-400">50.00% Total</p>
         </div>
 
         {/* Sent */}
         <div className="bg-gray-800 p-4 rounded-lg shadow text-center">
-          <h2 className="text-lg font-bold">SENT</h2>
+          <FiSend className="text-orange-400 text-4xl mx-auto" />
+          <h2 className="text-lg font-bold mt-4">SENT</h2>
           <p className="text-3xl font-bold mt-4 text-orange-400">0</p>
           <p className="mt-2 text-orange-400">0% Total</p>
         </div>
 
         {/* Failed */}
         <div className="bg-gray-800 p-4 rounded-lg shadow text-center">
-          <h2 className="text-lg font-bold">FAILED</h2>
+          <AiOutlineCloseCircle className="text-red-400 text-4xl mx-auto" />
+          <h2 className="text-lg font-bold mt-4">FAILED</h2>
           <p className="text-3xl font-bold mt-4 text-red-400">0</p>
           <p className="mt-2 text-red-400">0% Total</p>
         </div>

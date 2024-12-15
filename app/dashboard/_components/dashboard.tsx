@@ -1,77 +1,157 @@
-import { FC } from "react";
-import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
-import { FiSend } from "react-icons/fi";
-import { MdOutlineMarkEmailRead } from "react-icons/md";
+"use client";
 
-const CampaignDetail: FC = () => {
+import React from "react";
+import { FaUsers, FaBox, FaDollarSign, FaShoppingCart } from "react-icons/fa";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
+
+// Registrasi komponen Chart.js
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+// Data untuk grafik
+const data = {
+  labels: ["January", "February", "March", "April", "May", "June"],
+  datasets: [
+    {
+      label: "Sales",
+      data: [120, 190, 300, 500, 200, 300],
+      backgroundColor: "rgba(75, 192, 192, 0.5)",
+    },
+    {
+      label: "Revenue",
+      data: [150, 230, 250, 450, 350, 400],
+      backgroundColor: "rgba(153, 102, 255, 0.5)",
+    },
+  ],
+};
+
+// Opsi konfigurasi grafik
+const options = {
+  responsive: true,
+  plugins: {
+    legend: {
+      position: "top" as const,
+    },
+    title: {
+      display: true,
+      text: "Sales and Revenue Chart",
+    },
+  },
+};
+
+const Dashboard = () => {
   return (
-    <div className="container mx-auto p-6 bg-[#0D1B2A] text-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-6">Campaign Details - Test Bido Apri</h1>
-
-      {/* Informasi Utama */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {/* Template */}
-        <div className="bg-gray-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-bold">TEMPLATE</h2>
-          <p className="mt-2 bg-yellow-500 text-black px-3 py-1 inline-block rounded">
-            UTILITY
-          </p>
-          <p className="mt-2">
-            template_document_header_quickreply_b...
-          </p>
-          <p className="mt-2">06-12-2024 18:55:33</p>
+    <div className="flex flex-col gap-6 p-4">
+      {/* Grid untuk 4 kartu */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Kartu 1 */}
+        <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4">
+          <FaUsers className="text-4xl text-blue-400" />
+          <div>
+            <h3 className="text-gray-400 font-semibold">Total Accounts</h3>
+            <p className="text-white text-2xl font-bold">10,928</p>
+            <p className="text-green-500 text-sm">+17% more than previous week</p>
+          </div>
         </div>
 
-        {/* Sender */}
-        <div className="bg-gray-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-bold">SENDER</h2>
-          <p className="mt-2">-</p>
+        {/* Kartu 2 */}
+        <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4">
+          <FaBox className="text-4xl text-yellow-400" />
+          <div>
+            <h3 className="text-gray-400 font-semibold">Stock</h3>
+            <p className="text-white text-2xl font-bold">8,236</p>
+            <p className="text-red-500 text-sm">-7% less than previous week</p>
+          </div>
         </div>
 
-        {/* Contacts */}
-        <div className="bg-gray-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-bold">Contacts - Bido Alda</h2>
-          <p className="mt-2">2</p>
-          <p className="mt-2">0% Of your contacts</p>
+        {/* Kartu 3 */}
+        <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4">
+          <FaDollarSign className="text-4xl text-green-400" />
+          <div>
+            <h3 className="text-gray-400 font-semibold">Revenue</h3>
+            <p className="text-white text-2xl font-bold">$6,642</p>
+            <p className="text-green-500 text-sm">+13% more than previous week</p>
+          </div>
+        </div>
+
+        {/* Kartu 4 */}
+        <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4">
+          <FaShoppingCart className="text-4xl text-purple-400" />
+          <div>
+            <h3 className="text-gray-400 font-semibold">New Orders</h3>
+            <p className="text-white text-2xl font-bold">1,542</p>
+            <p className="text-green-500 text-sm">+10% more than previous week</p>
+          </div>
         </div>
       </div>
 
-      {/* Statistik */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        {/* Delivered */}
-        <div className="bg-gray-800 p-4 rounded-lg shadow text-center">
-          <AiOutlineCheckCircle className="text-green-400 text-4xl mx-auto" />
-          <h2 className="text-lg font-bold mt-4">DELIVERED</h2>
-          <p className="text-3xl font-bold mt-4 text-green-400">1</p>
-          <p className="mt-2 text-green-400">50.00% Total</p>
+      {/* Kotak untuk Tabel Transaksi */}
+      <div className="bg-[#1E293B] rounded-lg p-4 shadow-md">
+        <h2 className="text-gray-400 font-semibold mb-4">Latest Transactions</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead>
+              <tr>
+                <th className="text-left text-gray-500 text-sm font-semibold py-2">
+                  Name
+                </th>
+                <th className="text-left text-gray-500 text-sm font-semibold py-2">
+                  Status
+                </th>
+                <th className="text-left text-gray-500 text-sm font-semibold py-2">
+                  Date
+                </th>
+                <th className="text-left text-gray-500 text-sm font-semibold py-2">
+                  Amount
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { name: "John Doe", status: "pending", color: "bg-yellow-500" },
+                { name: "John Doe", status: "done", color: "bg-green-500" },
+                { name: "John Doe", status: "cancelled", color: "bg-red-500" },
+                { name: "John Doe", status: "pending", color: "bg-yellow-500" },
+                { name: "John Doe", status: "done", color: "bg-green-500" },
+              ].map((transaction, index) => (
+                <tr
+                  key={index}
+                  className="border-t border-gray-700 text-gray-200"
+                >
+                  <td className="py-2">{transaction.name}</td>
+                  <td className="py-2">
+                    <span
+                      className={`px-2 py-1 rounded-lg ${transaction.color} text-white text-xs font-semibold`}
+                    >
+                      {transaction.status}
+                    </span>
+                  </td>
+                  <td className="py-2">14.02.2023</td>
+                  <td className="py-2">$3,200</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+      </div>
 
-        {/* Read */}
-        <div className="bg-gray-800 p-4 rounded-lg shadow text-center">
-          <MdOutlineMarkEmailRead className="text-blue-400 text-4xl mx-auto" />
-          <h2 className="text-lg font-bold mt-4">READ</h2>
-          <p className="text-3xl font-bold mt-4 text-blue-400">1</p>
-          <p className="mt-2 text-blue-400">50.00% Total</p>
-        </div>
-
-        {/* Sent */}
-        <div className="bg-gray-800 p-4 rounded-lg shadow text-center">
-          <FiSend className="text-orange-400 text-4xl mx-auto" />
-          <h2 className="text-lg font-bold mt-4">SENT</h2>
-          <p className="text-3xl font-bold mt-4 text-orange-400">0</p>
-          <p className="mt-2 text-orange-400">0% Total</p>
-        </div>
-
-        {/* Failed */}
-        <div className="bg-gray-800 p-4 rounded-lg shadow text-center">
-          <AiOutlineCloseCircle className="text-red-400 text-4xl mx-auto" />
-          <h2 className="text-lg font-bold mt-4">FAILED</h2>
-          <p className="text-3xl font-bold mt-4 text-red-400">0</p>
-          <p className="mt-2 text-red-400">0% Total</p>
+      {/* Kotak untuk Grafik */}
+      <div className="bg-[#1E293B] rounded-lg p-4 shadow-md">
+        <h2 className="text-gray-400 font-semibold mb-4">Graph Component</h2>
+        <div style={{ width: "100%", maxWidth: "600px", margin: "0 auto" }}>
+          <Bar data={data} options={options} />
         </div>
       </div>
     </div>
   );
 };
 
-export default CampaignDetail;
+export default Dashboard;

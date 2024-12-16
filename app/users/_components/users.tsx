@@ -1,15 +1,42 @@
 import Link from "next/link";
+import { fetchAPI } from "@/services/api"; // Pastikan path ke api.ts sudah benar
 
-const User = () => {
-  // Simulasi data untuk tabel
-  const users = [
-    { id: 1, name: "John Doe", status: "pending", date: "14.02.2023", amount: "$3,200" },
-    { id: 2, name: "John Doe", status: "done", date: "14.02.2023", amount: "$3,200" },
-    { id: 3, name: "John Doe", status: "cancelled", date: "14.02.2023", amount: "$3,200" },
-    { id: 4, name: "John Doe", status: "pending", date: "14.02.2023", amount: "$3,200" },
-    { id: 5, name: "John Doe", status: "done", date: "14.02.2023", amount: "$3,200" },
-  ];
+// Fetch data dari server menggunakan Server-Side Rendering
+export const getServerSideProps = async () => {
+  try {
+    // Panggil fungsi fetchAPI untuk mengambil data dari endpoint
+    const response = await fetchAPI<{ data: User[] }>("account/get");
 
+    return {
+      props: {
+        users: response.data, // Kirim data ke komponen sebagai props
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching data:", error);
+
+    return {
+      props: {
+        users: [], // Kirim array kosong jika fetch gagal
+      },
+    };
+  }
+};
+
+// Tipe Data User
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  balance: number;
+  created_at: string;
+}
+
+interface UserPageProps {
+  users: User[];
+}
+
+const User = ({ users }: UserPageProps) => {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4 text-white">Users</h1>
@@ -18,32 +45,24 @@ const User = () => {
           <thead className="bg-gray-700">
             <tr>
               <th className="px-6 py-3 text-sm font-semibold tracking-wide">Name</th>
-              <th className="px-6 py-3 text-sm font-semibold tracking-wide">Status</th>
-              <th className="px-6 py-3 text-sm font-semibold tracking-wide">Date</th>
+              <th className="px-6 py-3 text-sm font-semibold tracking-wide">Email</th>
+              <th className="px-6 py-3 text-sm font-semibold tracking-wide">Balance</th>
+              <th className="px-6 py-3 text-sm font-semibold tracking-wide">Created At</th>
               <th className="px-6 py-3 text-sm font-semibold tracking-wide">Link</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-600">
             {users.map((user) => (
-              <tr key={user.id}>
+              <tr key={user._id}>
                 <td className="px-6 py-4">{user.name}</td>
+                <td className="px-6 py-4">{user.email}</td>
+                <td className="px-6 py-4">${user.balance.toFixed(2)}</td>
                 <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 rounded-full text-sm ${
-                      user.status === "pending"
-                        ? "bg-yellow-500 text-black"
-                        : user.status === "done"
-                        ? "bg-green-500 text-black"
-                        : "bg-red-500 text-white"
-                    }`}
-                  >
-                    {user.status}
-                  </span>
+                  {new Date(user.created_at).toLocaleDateString()}
                 </td>
-                <td className="px-6 py-4">{user.date}</td>
                 <td className="px-6 py-4">
                   <Link
-                    href={`/users/campaignList/${user.id}`}
+                    href={`/users/campaignList/${user._id}`}
                     className="text-blue-400 hover:underline"
                   >
                     View

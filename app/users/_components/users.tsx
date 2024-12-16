@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { fetchAPI } from "@/services/api"; // Import fungsi fetchAPI
 
 // Tipe Data User
 interface User {
@@ -9,32 +10,36 @@ interface User {
   created_at: string;
 }
 
-const User = () => {
-  // Data statis untuk tabel
-  const users: User[] = [
-    {
-      _id: "1",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      balance: 3200.5,
-      created_at: "2024-12-15T11:37:29.819Z",
-    },
-    {
-      _id: "2",
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      balance: 1500.75,
-      created_at: "2024-12-16T10:20:15.123Z",
-    },
-    {
-      _id: "3",
-      name: "Alice Johnson",
-      email: "alice.johnson@example.com",
-      balance: 4500.25,
-      created_at: "2024-12-14T09:15:10.456Z",
-    },
-  ];
+// Props untuk Komponen
+interface UserPageProps {
+  users: User[];
+}
 
+// Fetch data dari server menggunakan Server-Side Rendering
+export const getServerSideProps = async () => {
+  try {
+    // Fetch data dari API endpoint /account/get
+    const response = await fetchAPI<{ data: User[] }>("account/get");
+    console.log("Fetched Data:", response.data); // Debugging untuk memastikan data berhasil
+
+    return {
+      props: {
+        users: response.data || [], // Kirim data atau default ke array kosong jika undefined
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching data:", error);
+
+    return {
+      props: {
+        users: [], // Default ke array kosong jika terjadi error
+      },
+    };
+  }
+};
+
+// Komponen Utama
+const User = ({ users }: UserPageProps) => {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4 text-white">Users</h1>
@@ -50,24 +55,32 @@ const User = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-600">
-            {users.map((user) => (
-              <tr key={user._id}>
-                <td className="px-6 py-4">{user.name}</td>
-                <td className="px-6 py-4">{user.email}</td>
-                <td className="px-6 py-4">${user.balance.toFixed(2)}</td>
-                <td className="px-6 py-4">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4">
-                  <Link
-                    href={`/users/campaignList/${user._id}`}
-                    className="text-blue-400 hover:underline"
-                  >
-                    View
-                  </Link>
+            {Array.isArray(users) && users.length > 0 ? (
+              users.map((user) => (
+                <tr key={user._id}>
+                  <td className="px-6 py-4">{user.name}</td>
+                  <td className="px-6 py-4">{user.email}</td>
+                  <td className="px-6 py-4">${user.balance.toFixed(2)}</td>
+                  <td className="px-6 py-4">
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4">
+                    <Link
+                      href={`/users/campaignList/${user._id}`}
+                      className="text-blue-400 hover:underline"
+                    >
+                      View
+                    </Link>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="text-center py-4">
+                  No data available
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

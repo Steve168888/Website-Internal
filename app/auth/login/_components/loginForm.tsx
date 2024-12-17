@@ -22,7 +22,11 @@ function LoginForm() {
         body: JSON.stringify({ email, password }),
       });
 
-      localStorage.setItem("token", data.token);
+       // Simpan token di localStorage
+    localStorage.setItem("token", data.token);
+
+    // Simpan token di cookies (max-age 1 hari)
+    document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Strict`;
 
       // Set pesan sukses
       setSuccess("Login successful! Redirecting to dashboard...");

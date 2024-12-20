@@ -1,4 +1,4 @@
-"use client"; // Gunakan karena file ini membutuhkan logika klien
+"use client"; 
 
 import { usePathname } from "next/navigation";
 import MainLayout from "./layout/mainLayout/page";
@@ -10,14 +10,13 @@ export default function LayoutWrapper({
 }) {
   const pathname = usePathname();
 
-  // Tentukan apakah halaman saat ini adalah login atau register
   const isAuthPage = pathname === "/auth/login" || pathname === "/auth/register";
 
   return isAuthPage ? (
-    // Gunakan layout sederhana untuk halaman login dan register
+    
     <div className="auth-container">{children}</div>
   ) : (
-    // Gunakan MainLayout untuk halaman lainnya
+    
     <MainLayout>{children}</MainLayout>
   );
 }

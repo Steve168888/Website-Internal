@@ -10,7 +10,7 @@ const Sidebar = () => {
   const currentPath = usePathname(); // Dapatkan path aktif
 
   const isActive = (path: string) =>
-    currentPath === path
+    currentPath.startsWith(path)
       ? "bg-gray-700 text-white"
       : "hover:bg-gray-700 text-white"; // Kelas untuk link aktif
 

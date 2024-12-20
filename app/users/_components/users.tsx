@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { fetchAPI } from "@/services/api";
+import { fetchAccount } from "@/services/api";
+import { handlePagination, handleSearch, HidePagination } from "@/services/utils";
 
-interface User {
+interface Account {
   _id: string;
   name: string;
   email: string;
@@ -13,60 +14,39 @@ interface User {
 }
 
 const User = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<Account[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number | undefined>(1);
+  const [total_pages, setTotal_pages] = useState<number | undefined>(1); // Untuk mendukung kedua format
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const itemsPerPage = 10;
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
+    const fetchData = async () => {
+      setLoading(true);
+      const { data, total_pages, error } = await fetchAccount(currentPage, itemsPerPage, searchTerm);
 
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setError("Token tidak tersedia. Silakan login terlebih dahulu.");
-          setLoading(false);
-          return;
-        }
-
-        const data = await fetchAPI<{
-          data: User[];
-          total: number;
-          page: string;
-          total_pages: number;
-          limit: number;
-        }>(
-          `account/get?page=${currentPage}&limit=${itemsPerPage}&search=${searchTerm}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        setUsers(data?.data || []);
-        setTotalPages(data?.total_pages || 1);
-      } catch (err) {
-        console.error("Error fetching users:", err);
-        setError("Gagal mengambil data user. Periksa token atau server.");
-      } finally {
-        setLoading(false);
+      if (error) {
+        setError(error);
+      } else {
+        setUsers(data);
+        setTotalPages(total_pages); // Simpan untuk kompatibilitas
+        setTotal_pages(total_pages);
+        setError(null);
       }
+      setLoading(false);
     };
 
-    fetchUsers();
+    fetchData();
   }, [currentPage, searchTerm]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset ke halaman pertama saat melakukan pencarian
-  };
+  const { handlePrevious, handleNext } = handlePagination(currentPage, totalPages, setCurrentPage);
+
+  // Panggil fungsi HidePagination
+  const hidePagination = HidePagination(users.length, totalPages, total_pages);
 
   if (loading) return <div className="text-center text-white">Loading...</div>;
   if (error) return <div className="text-center text-red-500 font-bold">{error}</div>;
@@ -80,7 +60,7 @@ const User = () => {
             type="text"
             placeholder="Search Users..."
             value={searchTerm}
-            onChange={handleSearch}
+            onChange={(e) => handleSearch(e, setSearchTerm, setCurrentPage)}
             className="px-4 py-2 pl-10 w-full rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-gray-500"
           />
           <svg
@@ -119,9 +99,7 @@ const User = () => {
                   <td className="px-6 py-4">{user.name}</td>
                   <td className="px-6 py-4">{user.email}</td>
                   <td className="px-6 py-4">${user.balance.toFixed(2)}</td>
-                  <td className="px-6 py-4 text-center align-middle">
-                    {user.campaignCount}
-                  </td>
+                  <td className="px-6 py-4 text-center align-middle">{user.campaignCount}</td>
                   <td className="px-6 py-4">
                     <Link
                       href={`/users/campaignList/${user._id}`}
@@ -134,11 +112,8 @@ const User = () => {
               ))
             ) : (
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-6 py-4 text-center text-gray-400"
-                >
-                  Tidak ada data user yang tersedia.
+                <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
+                  Tidak ada data user yang tersedia
                 </td>
               </tr>
             )}
@@ -147,28 +122,30 @@ const User = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-between items-center mt-4">
-        <div></div> {/* Empty div to balance flex */}
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span className="text-white">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50"
-          >
-            Next
-          </button>
+      {!hidePagination && (
+        <div className="flex justify-between items-center mt-4">
+          <div></div> {/* Empty div to balance flex */}
+          <div className="flex space-x-2">
+            <button
+              onClick={handlePrevious}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50 hover:bg-gray-600 hover:text-gray-100 transition-all duration-200"
+            >
+              Previous
+            </button>
+            <span className="text-white">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={handleNext}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50 hover:bg-gray-600 hover:text-gray-100 transition-all duration-200"
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

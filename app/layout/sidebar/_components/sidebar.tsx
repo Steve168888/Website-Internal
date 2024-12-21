@@ -2,7 +2,7 @@
 
 import React from "react";
 import { usePathname } from "next/navigation"; // Gunakan usePathname untuk mendapatkan path aktif
-import { FiUser, FiSettings, FiLogOut, FiDollarSign } from "react-icons/fi";
+import { FiUser, FiLogOut } from "react-icons/fi";
 import { AiOutlineDashboard } from "react-icons/ai";
 import Link from "next/link";
 
@@ -43,24 +43,6 @@ const Sidebar = () => {
           >
             <FiUser className="text-xl" />
             <span>Users</span>
-          </Link>
-          <Link
-            href="/transactions"
-            className={`flex items-center space-x-2 p-2 rounded ${isActive(
-              "/transactions"
-            )}`}
-          >
-            <FiDollarSign className="text-xl" />
-            <span>Transactions</span>
-          </Link>
-          <Link
-            href="/settings"
-            className={`flex items-center space-x-2 p-2 rounded ${isActive(
-              "/settings"
-            )}`}
-          >
-            <FiSettings className="text-xl" />
-            <span>Settings</span>
           </Link>
           <Link
             href="/auth/login"

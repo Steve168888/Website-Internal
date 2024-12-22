@@ -2,54 +2,76 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetchAPI } from "@/services/api"; // Import fungsi fetchAPI
+import { fetchAPI } from "@/services/api";
 
-function LoginForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(""); // State untuk pesan sukses
+const LoginForm: React.FC = () => {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
-      // Panggil fetchAPI untuk login
-      const data = await fetchAPI<{ token: string }>("account/login", {
+      // Login request
+      const result = await fetchAPI<{
+        token: string;
+        user: { id: string; username: string };
+      }>("account/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-       // Simpan token di localStorage
-    localStorage.setItem("token", data.token);
+      // Save token, admin ID, and username in localStorage
+      localStorage.setItem("token", result.token);
+      localStorage.setItem("adminId", result.user.id);
+      localStorage.setItem("adminUsername", result.user.username);
 
-    // Simpan token di cookies (max-age 1 hari)
-    document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Strict`;
-
-      // Set pesan sukses
+      // Success feedback and redirect
       setSuccess("Login successful! Redirecting to dashboard...");
-      setError(""); // Reset error jika ada
-      setTimeout(() => router.push("/dashboard"), 1500); // Redirect dengan delay
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-        setSuccess(""); // Reset success jika ada
-      } else {
-        setError("An unexpected error occurred.");
-        setSuccess("");
-      }
+      setError("");
+      setTimeout(() => router.push("/dashboard"), 1500);
+    } catch (err) {
+      handleError(err);
+      setSuccess("");
     }
   };
+
+  // Error handling
+  const handleError = (err: unknown) => {
+    if (isAPIError(err)) {
+      switch (err.message) {
+        case "User not found.":
+          setError("Email is not registered.");
+          break;
+        case "Invalid credentials.":
+          setError("Wrong password.");
+          break;
+        default:
+          setError("An unexpected error occurred.");
+      }
+    } else {
+      setError("An unexpected error occurred.");
+    }
+  };
+
+  // Type guard for API errors
+  const isAPIError = (err: unknown): err is { message: string } =>
+    typeof err === "object" && err !== null && "message" in err;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[var(--background)]">
       <div className="w-full max-w-md p-8 bg-[var(--backgroundSoft)] rounded-lg shadow-lg">
-        <h2 className="mb-8 text-3xl font-bold text-center text-[var(--foreground)]">Login</h2>
-        
+        <h2 className="mb-8 text-3xl font-bold text-center text-[var(--foreground)]">
+          Login
+        </h2>
+
+        {/* Error or Success Messages */}
         {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
-        {success && <p className="mb-4 text-sm text-green-500">{success}</p>} {/* Pesan sukses */}
+        {success && <p className="mb-4 text-sm text-green-500">{success}</p>}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
@@ -79,6 +101,7 @@ function LoginForm() {
             Login
           </button>
         </form>
+
         <p className="mt-4 text-center text-[var(--foregroundSoft)]">
           Don&apos;t have an account?{" "}
           <Link href="/auth/register" className="text-teal-500 hover:underline">
@@ -88,6 +111,6 @@ function LoginForm() {
       </div>
     </div>
   );
-}
+};
 
 export default LoginForm;

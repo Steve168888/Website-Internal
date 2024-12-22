@@ -146,9 +146,9 @@ const CampaignList = () => {
           Back
         </button>
 
-        {/* Pagination hanya terlihat jika tidak disembunyikan */}
+        {/* Pagination */}
         {!hidePagination && (
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 items-center justify-between">
             <button
               onClick={handlePrevious}
               disabled={currentPage === 1}
@@ -156,12 +156,12 @@ const CampaignList = () => {
             >
               Previous
             </button>
-            <span className="text-white">
+            <span className="text-white flex-grow text-center">
               Page {currentPage} of {totalPages > 1 ? totalPages : 1}
             </span>
             <button
               onClick={handleNext}
-              disabled={currentPage === totalPages || totalPages <= 1}
+              disabled={currentPage === totalPages}
               className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50 hover:bg-gray-600 hover:text-gray-100 transition-all duration-200"
             >
               Next

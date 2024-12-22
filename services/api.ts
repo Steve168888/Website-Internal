@@ -1,17 +1,68 @@
 const BASE_URL = 'http://localhost:5000/api/v1';
 
-export const fetchAPI = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+export const fetchAPI = async <T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> => {
   try {
     const response = await fetch(`${BASE_URL}/${endpoint}`, options);
+
+    // Parsing error JSON saat respons tidak OK
     if (!response.ok) {
-      throw new Error(`Failed to fetch ${endpoint}. Status: ${response.status}`);
+      const errorData = await response.json(); // Parsing pesan error dari server
+      throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
     }
+
+    // Parsing respons JSON jika sukses
     return await response.json();
   } catch (error) {
     console.error(`Error fetching ${endpoint}:`, error);
-    throw error;
+    throw error; // Lempar error ke login form untuk penanganan
   }
 };
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+export const fetchAdminUsernameById = async (
+  id: string
+): Promise<{
+  username: string | null;
+  error: string | null;
+}> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return {
+        username: null,
+        error: "Token tidak tersedia. Silakan login terlebih dahulu.",
+      };
+    }
+
+    const endpoint = `account/get-admin/${id}`;
+    const response = await fetchAPI<{
+      data: { username: string };
+    }>(endpoint, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const { data } = response;
+    return { username: data.username, error: null };
+  } catch (error) {
+    console.error("Error in fetchAdminUsernameById:", error);
+    return {
+      username: null,
+      error: "Terjadi kesalahan yang tidak diketahui.",
+    };
+  }
+};
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,8 +80,8 @@ export const fetchAccount = async (
   search: string = ""
 ): Promise<{
   data: Account[];
-  total: number; 
   total_pages: number;
+  total: number; // Tambahkan total di sini
   error: string | null;
 }> => {
   try {
@@ -38,8 +89,8 @@ export const fetchAccount = async (
     if (!token) {
       return {
         data: [],
-        total: 0, 
         total_pages: 1,
+        total: 0, // Default value jika token tidak tersedia
         error: "Token tidak tersedia. Silakan login terlebih dahulu.",
       };
     }
@@ -47,8 +98,8 @@ export const fetchAccount = async (
     const endpoint = `account/get?page=${page}&limit=${limit}&search=${search}`;
     const response = await fetchAPI<{
       data: Account[];
-      total: number; 
       total_pages: number;
+      total: number; // Sesuaikan dengan respons API Anda
     }>(endpoint, {
       method: "GET",
       headers: {
@@ -57,16 +108,20 @@ export const fetchAccount = async (
       },
     });
 
-    const { data, total, total_pages } = response; 
-    return { data, total, total_pages, error: null };
+    const { data, total_pages, total } = response;
+    return { data, total_pages, total, error: null };
   } catch (error) {
     console.error("Error in fetchAccount:", error);
-    if (error instanceof Error) {
-      return { data: [], total: 0, total_pages: 1, error: error.message };
-    }
-    return { data: [], total: 0, total_pages: 1, error: "Terjadi kesalahan yang tidak diketahui." };
+    return {
+      data: [],
+      total_pages: 1,
+      total: 0, // Default jika terjadi error
+      error: "Terjadi kesalahan yang tidak diketahui.",
+    };
   }
 };
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -155,7 +210,7 @@ export const fetchTotalCampaigns = async (
       };
     }
 
-    const endpoint = `campaign/get?limit=${limit}&page=${page}&search=${search}`; // Tidak ada account_id
+    const endpoint = `campaign/get?limit=${limit}&page=${page}&search=${search}`; 
     const response = await fetchAPI<{
       data: Campaign[];
       total: number; // Respons API harus memiliki properti total

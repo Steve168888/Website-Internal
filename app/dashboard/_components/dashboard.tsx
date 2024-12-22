@@ -32,16 +32,16 @@ const Dashboard = () => {
     const fetchTotalAccounts = async () => {
       setLoadingAccounts(true);
       const { total, error } = await fetchAccount(1, 10, "");
-
+  
       if (error) {
         setErrorAccounts(error);
       } else {
-        setTotalAccounts(total);
+        setTotalAccounts(total); // Gunakan total dari respons
         setErrorAccounts(null);
       }
       setLoadingAccounts(false);
     };
-
+  
     fetchTotalAccounts();
   }, []);
 
@@ -115,22 +115,24 @@ const Dashboard = () => {
         </Link>
 
         {/* Kartu Total Campaigns */}
-        <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4 hover:bg-gray-700 transition-all duration-200">
-          <FaBox className="text-4xl text-yellow-400" />
-          <div>
-            <h3 className="text-gray-400 font-semibold">Total Campaigns</h3>
-            {loadingCampaigns ? (
-              <p className="text-white text-xl font-bold">Loading...</p>
-            ) : errorCampaigns ? (
-              <p className="text-red-500 text-sm">{errorCampaigns}</p>
-            ) : (
-              <p className="text-white text-2xl font-bold">{totalCampaigns.toLocaleString()}</p>
-            )}
-            <p className="text-green-500 text-sm">+5% more than previous week</p>
-          </div>
-        </div>
+        <Link href="/users">
+            <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4 hover:bg-gray-700 transition-all duration-200">
+              <FaBox className="text-4xl text-yellow-400" />
+              <div>
+                <h3 className="text-gray-400 font-semibold">Total Campaigns</h3>
+                {loadingCampaigns ? (
+                  <p className="text-white text-xl font-bold">Loading...</p>
+                ) : errorCampaigns ? (
+                  <p className="text-red-500 text-sm">{errorCampaigns}</p>
+                ) : (
+                  <p className="text-white text-2xl font-bold">{totalCampaigns.toLocaleString()}</p>
+                )}
+                <p className="text-green-500 text-sm">+5% more than previous week</p>
+              </div>
+            </div>
+          </Link>
 
-        <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4">
+        <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4  hover:bg-gray-700 transition-all duration-200">
           <FaDollarSign className="text-4xl text-green-400" />
           <div>
             <h3 className="text-gray-400 font-semibold">Revenue</h3>
@@ -139,7 +141,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4">
+        <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4  hover:bg-gray-700 transition-all duration-200">
           <FaShoppingCart className="text-4xl text-purple-400" />
           <div>
             <h3 className="text-gray-400 font-semibold">New Orders</h3>

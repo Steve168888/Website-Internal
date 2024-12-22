@@ -18,8 +18,7 @@ const User = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number | undefined>(1);
-  const [total_pages, setTotal_pages] = useState<number | undefined>(1); // Untuk mendukung kedua format
+  const [total_pages, setTotal_pages] = useState<number>(1); // Fokus hanya pada total_pages
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const itemsPerPage = 10;
@@ -33,8 +32,7 @@ const User = () => {
         setError(error);
       } else {
         setUsers(data);
-        setTotalPages(total_pages); 
-        setTotal_pages(total_pages);
+        setTotal_pages(total_pages); // Tetap fokus pada total_pages
         setError(null);
       }
       setLoading(false);
@@ -43,10 +41,9 @@ const User = () => {
     fetchData();
   }, [currentPage, searchTerm]);
 
-  const { handlePrevious, handleNext } = handlePagination(currentPage, totalPages, setCurrentPage);
+  const { handlePrevious, handleNext } = handlePagination(currentPage, total_pages, setCurrentPage);
 
-  // Panggil fungsi HidePagination
-  const hidePagination = HidePagination(users.length, totalPages, total_pages);
+  const hidePagination = HidePagination(users.length, total_pages, undefined);
 
   if (loading) return <div className="text-center text-white">Loading...</div>;
   if (error) return <div className="text-center text-red-500 font-bold">{error}</div>;
@@ -55,9 +52,9 @@ const User = () => {
     <div className="container mx-auto p-6">
       {/* Header dengan Campaign List dan Search */}
       <div className="flex justify-between items-center mb-4">
-      <h1 className="text-2xl font-bold text-white hover:text-gray-300 transition-all duration-200 cursor-pointer">
-        Account List
-      </h1>
+        <h1 className="text-2xl font-bold text-white hover:text-gray-300 transition-all duration-200 cursor-pointer">
+          Account List
+        </h1>
         <div className="relative w-1/4">
           <input
             type="text"
@@ -116,7 +113,7 @@ const User = () => {
             ) : (
               <tr>
                 <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
-                  There is no account data available.
+                  There is no account data available
                 </td>
               </tr>
             )}
@@ -124,31 +121,31 @@ const User = () => {
         </table>
       </div>
 
-      {/* Pagination */}
-      {!hidePagination && (
-        <div className="flex justify-between items-center mt-4">
-          <div></div> {/* Empty div to balance flex */}
-          <div className="flex space-x-2">
-            <button
-              onClick={handlePrevious}
-              disabled={currentPage === 1}
-              className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50 hover:bg-gray-600 hover:text-gray-100 transition-all duration-200"
-            >
-              Previous
-            </button>
-            <span className="text-white">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={handleNext}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50 hover:bg-gray-600 hover:text-gray-100 transition-all duration-200"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+{/* Pagination */}
+{!hidePagination && (
+  <div className="flex justify-end items-center mt-4">
+    <div className="flex items-center space-x-2">
+      <button
+        onClick={handlePrevious}
+        disabled={currentPage === 1}
+        className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50 hover:bg-gray-600 hover:text-gray-100 transition-all duration-200"
+      >
+        Previous
+      </button>
+      <span className="text-white text-center">
+        Page {currentPage} of {total_pages > 1 ? total_pages : 1}
+      </span>
+      <button
+        onClick={handleNext}
+        disabled={currentPage === total_pages}
+        className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50 hover:bg-gray-600 hover:text-gray-100 transition-all duration-200"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

@@ -56,14 +56,15 @@ export const handlePagination = (
 
 
 export const HidePagination = (
-    dataLength: number,
-    totalPages: number | undefined,
-    total_pages: number | undefined
+  dataLength: number,
+  total_pages: number | undefined,
+  totalPages: number | undefined
 ): boolean => {
-    // Ambil totalPages yang valid dari dua opsi
-    const effectiveTotalPages = totalPages ?? total_pages ?? 0;
-  
-    // Jika data kosong atau totalPages <= 1, sembunyikan pagination
-    return dataLength === 0 || effectiveTotalPages <= 1;
+  // Ambil total_pages atau totalPages yang valid
+  const effectiveTotalPages = total_pages ?? totalPages ?? 0;
+
+  // Jika data kosong atau total halaman <= 1, sembunyikan pagination
+  return dataLength === 0 || effectiveTotalPages <= 1;
 };
+
   

@@ -13,7 +13,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Kontainer Utama */}
       <div className="flex-1 flex flex-col bg-[#0D1B2A] overflow-auto">
         {/* Navbar */}
-        <header className="bg-[#0D1B2A] px-6 py-4 mb-1 mt-2">
+        <header className="bg-[#0D1B2A] px-6 py-4">
           <Navbar />
         </header>
 

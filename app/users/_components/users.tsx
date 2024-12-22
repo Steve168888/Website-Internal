@@ -33,7 +33,7 @@ const User = () => {
         setError(error);
       } else {
         setUsers(data);
-        setTotalPages(total_pages); // Simpan untuk kompatibilitas
+        setTotalPages(total_pages); 
         setTotal_pages(total_pages);
         setError(null);
       }
@@ -53,8 +53,11 @@ const User = () => {
 
   return (
     <div className="container mx-auto p-6">
-      {/* Header dan Kotak Pencarian */}
+      {/* Header dengan Campaign List dan Search */}
       <div className="flex justify-between items-center mb-4">
+      <h1 className="text-2xl font-bold text-white hover:text-gray-300 transition-all duration-200 cursor-pointer">
+        Account List
+      </h1>
         <div className="relative w-1/4">
           <input
             type="text"
@@ -87,9 +90,9 @@ const User = () => {
             <tr>
               <th className="px-6 py-3">Name</th>
               <th className="px-6 py-3">Email</th>
-              <th className="px-6 py-3">Balance</th>
-              <th className="px-6 py-3">Total Campaign</th>
-              <th className="px-6 py-3">Link</th>
+              <th className="px-6 py-3 text-center">Balance</th>
+              <th className="px-6 py-3 text-center">Total Campaign</th>
+              <th className="px-6 py-3 text-center">Link</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-600">
@@ -98,9 +101,9 @@ const User = () => {
                 <tr key={user._id}>
                   <td className="px-6 py-4">{user.name}</td>
                   <td className="px-6 py-4">{user.email}</td>
-                  <td className="px-6 py-4">${user.balance.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-center">${user.balance.toFixed(2)}</td>
                   <td className="px-6 py-4 text-center align-middle">{user.campaignCount}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     <Link
                       href={`/users/campaignList/${user._id}`}
                       className="text-blue-400 hover:underline"
@@ -113,7 +116,7 @@ const User = () => {
             ) : (
               <tr>
                 <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
-                  Tidak ada data user yang tersedia
+                  There is no account data available.
                 </td>
               </tr>
             )}

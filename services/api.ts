@@ -13,6 +13,7 @@ export const fetchAPI = async <T>(endpoint: string, options: RequestInit = {}): 
   }
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 interface Account {
   _id: string;
@@ -25,45 +26,49 @@ interface Account {
 export const fetchAccount = async (
   page: number,
   limit: number,
-  search: string = ''
+  search: string = ""
 ): Promise<{
   data: Account[];
+  total: number; 
   total_pages: number;
   error: string | null;
 }> => {
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
       return {
         data: [],
+        total: 0, 
         total_pages: 1,
-        error: 'Token tidak tersedia. Silakan login terlebih dahulu.',
+        error: "Token tidak tersedia. Silakan login terlebih dahulu.",
       };
     }
 
     const endpoint = `account/get?page=${page}&limit=${limit}&search=${search}`;
     const response = await fetchAPI<{
       data: Account[];
+      total: number; 
       total_pages: number;
     }>(endpoint, {
-      method: 'GET',
+      method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
-    const { data, total_pages } = response;
-
-    return { data, total_pages, error: null };
+    const { data, total, total_pages } = response; 
+    return { data, total, total_pages, error: null };
   } catch (error) {
-    console.error('Error in fetchUsersData:', error);
+    console.error("Error in fetchAccount:", error);
     if (error instanceof Error) {
-      return { data: [], total_pages: 1, error: error.message };
+      return { data: [], total: 0, total_pages: 1, error: error.message };
     }
-    return { data: [], total_pages: 1, error: 'Terjadi kesalahan yang tidak diketahui.' };
+    return { data: [], total: 0, total_pages: 1, error: "Terjadi kesalahan yang tidak diketahui." };
   }
 };
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 interface Campaign {
@@ -71,6 +76,7 @@ interface Campaign {
   name: string;
   status: string;
   created_at: string;
+  schedule: string | null;
 }
 
 export const fetchCampaigns = async (
@@ -105,10 +111,15 @@ export const fetchCampaigns = async (
       },
     });
 
-    // Ambil `totalPages` langsung dari respons API
     const { data, totalPages } = response;
 
-    return { data, totalPages, error: null };
+    // Pastikan nilai schedule diambil jika tersedia
+    const campaigns = data.map((campaign) => ({
+      ...campaign,
+      schedule: campaign.schedule || null, // Menambahkan schedule jika tersedia
+    }));
+
+    return { data: campaigns, totalPages, error: null };
   } catch (error) {
     console.error("Error in fetchCampaigns:", error);
     if (error instanceof Error) {
@@ -117,4 +128,132 @@ export const fetchCampaigns = async (
     return { data: [], totalPages: 1, error: "Terjadi kesalahan yang tidak diketahui." };
   }
 };
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+export const fetchTotalCampaigns = async (
+  page: number,
+  limit: number,
+  search: string = ""
+): Promise<{
+  data: Campaign[];
+  total: number; // Tambahkan total untuk semua kampanye
+  totalPages: number;
+  error: string | null;
+}> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return {
+        data: [],
+        total: 0,
+        totalPages: 1,
+        error: "Token tidak tersedia. Silakan login terlebih dahulu.",
+      };
+    }
+
+    const endpoint = `campaign/get?limit=${limit}&page=${page}&search=${search}`; // Tidak ada account_id
+    const response = await fetchAPI<{
+      data: Campaign[];
+      total: number; // Respons API harus memiliki properti total
+      totalPages: number;
+    }>(endpoint, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const { data, total, totalPages } = response; // Total dikembalikan dari API
+    return { data, total, totalPages, error: null };
+  } catch (error) {
+    console.error("Error in fetchAllCampaigns:", error);
+    if (error instanceof Error) {
+      return { data: [], total: 0, totalPages: 1, error: error.message };
+    }
+    return { data: [], total: 0, totalPages: 1, error: "Terjadi kesalahan yang tidak diketahui." };
+  }
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+interface Campaign {
+  campaign_id: string;
+  name: string;
+  template: string;
+  created_at: string;
+  phone_sender: string;
+  customersCount: number;
+}
+
+interface DetailStatuses {
+  Pending: number;
+  Failed: number;
+  Sent: number;
+  Delivered: number;
+  Read: number;
+}
+
+export const fetchCampaignDetail = async (
+  campaignId: string,
+  accountId: string
+): Promise<{
+  campaign: Campaign | null;
+  detailStatuses: DetailStatuses | null;
+  error: string | null;
+}> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return {
+        campaign: null,
+        detailStatuses: null,
+        error: "Token tidak tersedia. Silakan login terlebih dahulu.",
+      };
+    }
+
+    const endpoint = `campaign-detail/get/${campaignId}?account_id=${accountId}`;
+    const response = await fetchAPI<{
+      campaign: Campaign;
+      detailStatuses: DetailStatuses;
+    }>(endpoint, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    // Destructuring response untuk mengembalikan data
+    const { campaign, detailStatuses } = response;
+
+    return {
+      campaign,
+      detailStatuses,
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error in fetchCampaignDetail:", error);
+    if (error instanceof Error) {
+      return {
+        campaign: null,
+        detailStatuses: null,
+        error: error.message,
+      };
+    }
+    return {
+      campaign: null,
+      detailStatuses: null,
+      error: "Terjadi kesalahan yang tidak diketahui.",
+    };
+  }
+};
+
+
+
+
 

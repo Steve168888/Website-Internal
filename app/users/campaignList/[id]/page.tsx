@@ -11,6 +11,7 @@ interface Campaign {
   name: string;
   status: string;
   created_at: string;
+  schedule: string | null; // Tambahkan properti schedule
 }
 
 const CampaignList = () => {
@@ -35,6 +36,7 @@ const CampaignList = () => {
       }
 
       setLoading(true);
+      // Pemanggilan fungsi `fetchCampaigns` dengan id
       const { data, totalPages, error } = await fetchCampaigns(id, currentPage, itemsPerPage, searchTerm);
 
       if (error) {
@@ -60,8 +62,11 @@ const CampaignList = () => {
 
   return (
     <div className="container mx-auto p-6">
-      {/* Header dan Kotak Pencarian */}
+      {/* Header dengan Campaign dan Search */}
       <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold text-white hover:text-gray-300 transition-all duration-200 cursor-pointer">
+          Campaign List
+        </h1>
         <div className="relative w-1/4">
           <input
             type="text"
@@ -90,39 +95,44 @@ const CampaignList = () => {
       {/* Tabel Kampanye */}
       <div className="bg-gray-800 text-white rounded-lg shadow-md overflow-hidden">
         <table className="min-w-full text-left">
-          <thead className="bg-gray-700">
-            <tr>
-              <th className="px-6 py-3">Campaign Name</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3">Created At</th>
-              <th className="px-6 py-3">Action</th>
-            </tr>
-          </thead>
+        <thead className="bg-gray-700">
+          <tr>
+            <th className="px-6 py-3">Campaign Name</th> 
+            <th className="px-6 py-3 text-center">Status</th>
+            <th className="px-6 py-3 text-center">Created At</th> 
+            <th className="px-6 py-3 text-center">Schedule</th> 
+            <th className="px-6 py-3 text-center">Action</th> 
+          </tr>
+        </thead>
           <tbody className="divide-y divide-gray-600">
-            {campaigns.length > 0 ? (
-              campaigns.map((campaign) => (
-                <tr key={campaign.campaign_id}>
-                  <td className="px-6 py-4">{campaign.name}</td>
-                  <td className="px-6 py-4">{campaign.status}</td>
-                  <td className="px-6 py-4">{new Date(campaign.created_at).toLocaleString()}</td>
-                  <td className="px-6 py-4">
-                    <Link
-                      href={`/users/campaignDetail?campaign_id=${campaign.campaign_id}&account_id=${id}`}
-                      className="text-blue-400 hover:underline"
-                    >
-                      Detail
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="px-6 py-4 text-center text-gray-400">
-                  Tidak ada data kampanye yang tersedia
-                </td>
+          {campaigns.length > 0 ? (
+            campaigns.map((campaign) => (
+              <tr key={campaign.campaign_id}>
+                <td className="px-6 py-4">{campaign.name}</td> 
+                <td className="px-6 py-4 text-center">{campaign.status}</td> 
+                <td className="px-6 py-4 text-center">{new Date(campaign.created_at).toLocaleString()}</td> 
+                <td className="px-6 py-4 text-center">
+                  {campaign.schedule ? new Date(campaign.schedule).toLocaleString() : "-"}
+                </td> 
+                <td className="px-6 py-4 text-center">
+                  <Link
+                    href={`/users/campaignDetail?campaign_id=${campaign.campaign_id}&account_id=${id}`}
+                    className="text-blue-400 hover:underline"
+                  >
+                    Detail
+                  </Link>
+                </td> 
               </tr>
-            )}
-          </tbody>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
+                There is no campaign data available
+              </td>
+            </tr>
+          )}
+        </tbody>
+
         </table>
       </div>
 
@@ -135,7 +145,7 @@ const CampaignList = () => {
         >
           Back
         </button>
-        
+
         {/* Pagination hanya terlihat jika tidak disembunyikan */}
         {!hidePagination && (
           <div className="flex space-x-2">

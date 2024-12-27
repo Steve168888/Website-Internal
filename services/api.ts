@@ -184,20 +184,25 @@ export const fetchCampaigns = async (
   }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+interface Campaign {
+  campaign_id: string;
+  name: string;
+  status: string;
+  created_at: string;
+  schedule: string | null;
+}
 
-
-export const fetchTotalCampaigns = async (
-  page: number,
-  limit: number,
+export const fetchAllCampaigns = async (
+  page: number = 1,
+  limit: number | null = null, // Limit null berarti unlimited
   search: string = ""
 ): Promise<{
   data: Campaign[];
-  total: number; // Tambahkan total untuk semua kampanye
-  totalPages: number;
-  error: string | null;
+  total: number; // Total semua kampanye
+  error: string | null; // Pesan error jika ada
 }> => {
   try {
     const token = localStorage.getItem("token");
@@ -205,34 +210,112 @@ export const fetchTotalCampaigns = async (
       return {
         data: [],
         total: 0,
-        totalPages: 1,
         error: "Token tidak tersedia. Silakan login terlebih dahulu.",
       };
     }
 
-    const endpoint = `campaign/get?limit=${limit}&page=${page}&search=${search}`; 
-    const response = await fetchAPI<{
-      data: Campaign[];
-      total: number; // Respons API harus memiliki properti total
-      totalPages: number;
-    }>(endpoint, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+    let allData: Campaign[] = [];
+    let total = 0;
 
-    const { data, total, totalPages } = response; // Total dikembalikan dari API
-    return { data, total, totalPages, error: null };
+    if (limit !== null) {
+      // Jika limit ditentukan, ambil data sesuai limit
+      const endpoint = `campaign/get?limit=${limit}&page=${page}&search=${search}`;
+      const response = await fetchAPI<{
+        data: Campaign[];
+        total: number;
+      }>(endpoint, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      return { data: response.data, total: response.total, error: null };
+    } else {
+      // Jika limit adalah null, ambil semua data (unlimited)
+      let currentPage = 1;
+      while (true) {
+        const endpoint = `campaign/get?page=${currentPage}&search=${search}`;
+        const response = await fetchAPI<{
+          data: Campaign[];
+          total: number;
+        }>(endpoint, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        allData = [...allData, ...response.data];
+        total = response.total;
+
+        if (response.data.length === 0) break;
+        currentPage++;
+      }
+
+      return { data: allData, total, error: null };
+    }
   } catch (error) {
     console.error("Error in fetchAllCampaigns:", error);
     if (error instanceof Error) {
-      return { data: [], total: 0, totalPages: 1, error: error.message };
+      return { data: [], total: 0, error: error.message };
     }
-    return { data: [], total: 0, totalPages: 1, error: "Terjadi kesalahan yang tidak diketahui." };
+    return { data: [], total: 0, error: "Terjadi kesalahan yang tidak diketahui." };
   }
 };
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// export const fetchTotalCampaigns = async (
+//   page: number,
+//   limit: number,
+//   search: string = ""
+// ): Promise<{
+//   data: Campaign[];
+//   total: number; // Tambahkan total untuk semua kampanye
+//   totalPages: number;
+//   error: string | null;
+// }> => {
+//   try {
+//     const token = localStorage.getItem("token");
+//     if (!token) {
+//       return {
+//         data: [],
+//         total: 0,
+//         totalPages: 1,
+//         error: "Token tidak tersedia. Silakan login terlebih dahulu.",
+//       };
+//     }
+
+//     const endpoint = `campaign/get?limit=${limit}&page=${page}&search=${search}`; 
+//     const response = await fetchAPI<{
+//       data: Campaign[];
+//       total: number; // Respons API harus memiliki properti total
+//       totalPages: number;
+//     }>(endpoint, {
+//       method: "GET",
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//         "Content-Type": "application/json",
+//       },
+//     });
+
+//     const { data, total, totalPages } = response; // Total dikembalikan dari API
+//     return { data, total, totalPages, error: null };
+//   } catch (error) {
+//     console.error("Error in fetchAllCampaigns:", error);
+//     if (error instanceof Error) {
+//       return { data: [], total: 0, totalPages: 1, error: error.message };
+//     }
+//     return { data: [], total: 0, totalPages: 1, error: "Terjadi kesalahan yang tidak diketahui." };
+//   }
+// };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

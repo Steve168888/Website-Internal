@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FaUsers, FaBox, FaDollarSign, FaShoppingCart } from "react-icons/fa";
+import { FaUsers, FaBox } from "react-icons/fa";
 import Link from "next/link";
+import { formatDate } from "@/services/utils";
 
 import {
   Chart as ChartJS,
@@ -14,9 +15,9 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { fetchAccount, fetchTotalCampaigns } from "@/services/api"; // Import kedua fungsi fetch
+import { fetchAccount, fetchAllCampaigns } from "@/services/api";
 
-// Registrasi komponen Chart.js
+// Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const Dashboard = () => {
@@ -32,16 +33,16 @@ const Dashboard = () => {
     const fetchTotalAccounts = async () => {
       setLoadingAccounts(true);
       const { total, error } = await fetchAccount(1, 10, "");
-  
+
       if (error) {
         setErrorAccounts(error);
       } else {
-        setTotalAccounts(total); // Gunakan total dari respons
+        setTotalAccounts(total);
         setErrorAccounts(null);
       }
       setLoadingAccounts(false);
     };
-  
+
     fetchTotalAccounts();
   }, []);
 
@@ -49,7 +50,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchTotalCampaignsData = async () => {
       setLoadingCampaigns(true);
-      const { total, error } = await fetchTotalCampaigns(1, 10, "");
+      const { total, error } = await fetchAllCampaigns(1, 10, "");
 
       if (error) {
         setErrorCampaigns(error);
@@ -94,9 +95,8 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      {/* Grid untuk 4 kartu */}
+      {/* Grid for 2 cards */}
       <div className="grid grid-cols-2 gap-4">
-        {/* Kartu Total Accounts */}
         <Link href="/users">
           <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4 cursor-pointer hover:bg-gray-700 transition-all duration-200">
             <FaUsers className="text-4xl text-blue-400" />
@@ -114,83 +114,94 @@ const Dashboard = () => {
           </div>
         </Link>
 
-        {/* Kartu Total Campaigns */}
         <Link href="/users">
-            <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4 hover:bg-gray-700 transition-all duration-200">
-              <FaBox className="text-4xl text-yellow-400" />
-              <div>
-                <h3 className="text-gray-400 font-semibold">Total Campaigns</h3>
-                {loadingCampaigns ? (
-                  <p className="text-white text-xl font-bold">Loading...</p>
-                ) : errorCampaigns ? (
-                  <p className="text-red-500 text-sm">{errorCampaigns}</p>
-                ) : (
-                  <p className="text-white text-2xl font-bold">{totalCampaigns.toLocaleString()}</p>
-                )}
-                <p className="text-green-500 text-sm">+5% more than previous week</p>
-              </div>
+          <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4 hover:bg-gray-700 transition-all duration-200">
+            <FaBox className="text-4xl text-yellow-400" />
+            <div>
+              <h3 className="text-gray-400 font-semibold">Total Campaigns</h3>
+              {loadingCampaigns ? (
+                <p className="text-white text-xl font-bold">Loading...</p>
+              ) : errorCampaigns ? (
+                <p className="text-red-500 text-sm">{errorCampaigns}</p>
+              ) : (
+                <p className="text-white text-2xl font-bold">{totalCampaigns.toLocaleString()}</p>
+              )}
+              <p className="text-green-500 text-sm">+5% more than previous week</p>
             </div>
-          </Link>
-
-        <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4  hover:bg-gray-700 transition-all duration-200">
-          <FaDollarSign className="text-4xl text-green-400" />
-          <div>
-            <h3 className="text-gray-400 font-semibold">Revenue</h3>
-            <p className="text-white text-2xl font-bold">$6,642</p>
-            <p className="text-green-500 text-sm">+13% more than previous week</p>
           </div>
-        </div>
-
-        <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4  hover:bg-gray-700 transition-all duration-200">
-          <FaShoppingCart className="text-4xl text-purple-400" />
-          <div>
-            <h3 className="text-gray-400 font-semibold">New Orders</h3>
-            <p className="text-white text-2xl font-bold">1,542</p>
-            <p className="text-green-500 text-sm">+10% more than previous week</p>
-          </div>
-        </div>
+        </Link>
       </div>
 
-      {/* Latest Transactions Dummy */}
+      {/* Latest Campaigns */}
       <div className="bg-[#1E293B] rounded-lg p-4 shadow-md">
-        <h2 className="text-gray-400 font-semibold mb-4">Latest Transactions</h2>
+        <h2 className="text-gray-400 font-semibold mb-4">Latest Campaigns</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
               <tr>
-                <th className="text-left text-gray-500 text-sm font-semibold py-2">Name</th>
-                <th className="text-left text-gray-500 text-sm font-semibold py-2">Status</th>
-                <th className="text-left text-gray-500 text-sm font-semibold py-2">Date</th>
-                <th className="text-left text-gray-500 text-sm font-semibold py-2">Amount</th>
+                <th className="text-gray-500 text-sm font-semibold py-2 text-left">Name</th>
+                <th className="text-gray-500 text-sm font-semibold py-2 text-center">Status</th>
+                <th className="text-gray-500 text-sm font-semibold py-2 text-center">Created At</th>
+                <th className="text-gray-500 text-sm font-semibold py-2 text-center">Schedule</th>
               </tr>
             </thead>
             <tbody>
-              {[
-                { name: "John Doe", status: "pending", color: "bg-yellow-500", date: "14.02.2023", amount: 3200 },
-                { name: "Jane Smith", status: "done", color: "bg-green-500", date: "14.02.2023", amount: 4500 },
-                { name: "Mark Lee", status: "cancelled", color: "bg-red-500", date: "14.02.2023", amount: 2000 },
-                { name: "Sarah Connor", status: "pending", color: "bg-yellow-500", date: "14.02.2023", amount: 1500 },
-                { name: "Paul Walker", status: "done", color: "bg-green-500", date: "14.02.2023", amount: 5000 },
-              ].map((transaction, index) => (
-                <tr key={index} className="border-t border-gray-700 text-gray-200">
-                  <td className="py-2">{transaction.name}</td>
-                  <td className="py-2">
-                    <span
-                      className={`px-2 py-1 rounded-lg ${transaction.color} text-white text-xs font-semibold`}
-                    >
-                      {transaction.status}
-                    </span>
-                  </td>
-                  <td className="py-2">{transaction.date}</td>
-                  <td className="py-2">${transaction.amount.toLocaleString()}</td>
-                </tr>
-              ))}
+              <tr className="border-t border-gray-700 text-gray-200">
+                <td className="py-2">Campaign Alpha</td>
+                <td className="px-4 py-2 text-center">
+                  <span className="px-3 py-1 rounded-lg bg-[#9966FF] text-white text-sm font-medium">
+                    created
+                  </span>
+                </td>
+                <td className="py-2 text-center">{formatDate("2023-12-20T10:00:00Z")}</td>
+                <td className="py-2 text-center">{formatDate("2023-12-25T12:00:00Z")}</td>
+              </tr>
+              <tr className="border-t border-gray-700 text-gray-200">
+                <td className="py-2">Campaign Beta</td>
+                <td className="px-4 py-2 text-center">
+                  <span className="px-3 py-1 rounded-lg bg-gray-500 text-white text-sm font-medium">
+                    running
+                  </span>
+                </td>
+                <td className="py-2 text-center">{formatDate("2023-12-15T09:30:00Z")}</td>
+                <td className="py-2 text-center">{formatDate("2023-12-26T15:00:00Z")}</td>
+              </tr>
+              <tr className="border-t border-gray-700 text-gray-200">
+                <td className="py-2">Campaign Gamma</td>
+                <td className="px-4 py-2 text-center">
+                  <span className="px-3 py-1 rounded-lg bg-gray-500 text-white text-sm font-medium">
+                    completed
+                  </span>
+                </td>
+                <td className="py-2 text-center">{formatDate("2023-12-10T14:45:00Z")}</td>
+                <td className="py-2 text-center">-</td>
+              </tr>
+              <tr className="border-t border-gray-700 text-gray-200">
+                <td className="py-2">Campaign Delta</td>
+                <td className="px-4 py-2 text-center">
+                  <span className="px-3 py-1 rounded-lg bg-[#9966FF] text-white text-sm font-medium">
+                    created
+                  </span>
+                </td>
+                <td className="py-2 text-center">{formatDate("2023-12-05T08:20:00Z")}</td>
+                <td className="py-2 text-center">{formatDate("2023-12-27T16:00:00Z")}</td>
+              </tr>
+              <tr className="border-t border-gray-700 text-gray-200">
+                <td className="py-2">Campaign Epsilon</td>
+                <td className="px-4 py-2 text-center">
+                  <span className="px-3 py-1 rounded-lg bg-gray-500 text-white text-sm font-medium">
+                    running
+                  </span>
+                </td>
+                <td className="py-2 text-center">{formatDate("2023-12-01T11:15:00Z")}</td>
+                <td className="py-2 text-center">{formatDate("2023-12-28T18:00:00Z")}</td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Kotak untuk Grafik */}
+      {/* Graph */}
       <div className="bg-[#1E293B] rounded-lg p-4 shadow-md">
         <h2 className="text-gray-400 font-semibold mb-4">Graph Component</h2>
         <div style={{ width: "100%", maxWidth: "600px", margin: "0 auto" }}>

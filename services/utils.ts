@@ -67,4 +67,26 @@ export const HidePagination = (
   return dataLength === 0 || effectiveTotalPages <= 1;
 };
 
+
+
+export const formatDate = (dateString: string | null): string => {
+  if (!dateString) return "-"; // Jika null, tampilkan "-"
+  const options: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  };
+  const formatter = new Intl.DateTimeFormat("en-US", options);
+  const formattedDate = formatter.format(new Date(dateString));
+
+  // Reformat to "day month year, time"
+  const [month, day, year, time] = formattedDate
+    .replace(",", "")
+    .split(" ");
+  return `${day} ${month} ${year} ${time}`;
+};
+
   

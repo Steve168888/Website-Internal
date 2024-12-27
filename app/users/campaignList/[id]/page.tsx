@@ -107,7 +107,7 @@ const CampaignList = () => {
           <tbody className="divide-y divide-gray-600">
           {campaigns.length > 0 ? (
             campaigns.map((campaign) => (
-              <tr key={campaign.campaign_id}>
+              <tr key={campaign.campaign_id} className="hover:bg-gray-600">
                 <td className="px-6 py-4">{campaign.name}</td> 
                 <td className="px-6 py-4 text-center">{campaign.status}</td> 
                 <td className="px-6 py-4 text-center">{new Date(campaign.created_at).toLocaleString()}</td> 

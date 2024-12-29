@@ -132,6 +132,14 @@ interface Campaign {
   status: string;
   created_at: string;
   schedule: string | null;
+  detailStatuses?: {
+    Delivered?: number;
+    Read?: number;
+    Failed?: number;
+    Pending?: number;
+    Sent?: number;
+  };
+  detailCount?: number;
 }
 
 export const fetchCampaigns = async (
@@ -142,6 +150,7 @@ export const fetchCampaigns = async (
 ): Promise<{
   data: Campaign[];
   totalPages: number;
+  total: number; // Tambahkan properti total
   error: string | null;
 }> => {
   try {
@@ -150,6 +159,7 @@ export const fetchCampaigns = async (
       return {
         data: [],
         totalPages: 1,
+        total: 0, // Default value for total
         error: "Token tidak tersedia. Silakan login terlebih dahulu.",
       };
     }
@@ -158,6 +168,7 @@ export const fetchCampaigns = async (
     const response = await fetchAPI<{
       data: Campaign[];
       totalPages: number;
+      total: number; // API harus mengembalikan properti ini
     }>(endpoint, {
       method: "GET",
       headers: {
@@ -166,7 +177,7 @@ export const fetchCampaigns = async (
       },
     });
 
-    const { data, totalPages } = response;
+    const { data, totalPages, total } = response;
 
     // Pastikan nilai schedule diambil jika tersedia
     const campaigns = data.map((campaign) => ({
@@ -174,15 +185,16 @@ export const fetchCampaigns = async (
       schedule: campaign.schedule || null, // Menambahkan schedule jika tersedia
     }));
 
-    return { data: campaigns, totalPages, error: null };
+    return { data: campaigns, totalPages, total, error: null };
   } catch (error) {
     console.error("Error in fetchCampaigns:", error);
     if (error instanceof Error) {
-      return { data: [], totalPages: 1, error: error.message };
+      return { data: [], totalPages: 1, total: 0, error: error.message };
     }
-    return { data: [], totalPages: 1, error: "Terjadi kesalahan yang tidak diketahui." };
+    return { data: [], totalPages: 1, total: 0, error: "Terjadi kesalahan yang tidak diketahui." };
   }
 };
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -193,14 +205,23 @@ interface Campaign {
   status: string;
   created_at: string;
   schedule: string | null;
+  detailStatuses?: {
+    Delivered?: number;
+    Read?: number;
+    Failed?: number;
+    Pending?: number;
+    Sent?: number
+  };
+  detailCount?: number;
 }
+
 
 export const fetchAllCampaigns = async (
   page: number = 1,
-  limit: number | null = null, // Limit null berarti unlimited
+  limit: number | null = null, // Limit null berarti ambil semua data
   search: string = ""
 ): Promise<{
-  data: Campaign[];
+  data: Campaign[]; // Data dengan interface Campaign yang sudah diperbarui
   total: number; // Total semua kampanye
   error: string | null; // Pesan error jika ada
 }> => {
@@ -219,7 +240,9 @@ export const fetchAllCampaigns = async (
 
     if (limit !== null) {
       // Jika limit ditentukan, ambil data sesuai limit
-      const endpoint = `campaign/get?limit=${limit}&page=${page}&search=${search}`;
+      const endpoint = `campaign/get?limit=${limit}&page=${page}&search=${encodeURIComponent(
+        search
+      )}`;
       const response = await fetchAPI<{
         data: Campaign[];
         total: number;
@@ -231,12 +254,24 @@ export const fetchAllCampaigns = async (
         },
       });
 
-      return { data: response.data, total: response.total, error: null };
+      // Kembalikan data dengan format yang sesuai
+      return {
+        data: response.data.map((campaign) => ({
+          ...campaign,
+          detailStatuses: campaign.detailStatuses || { Delivered: 0, Read: 0 },
+          detailCount: campaign.detailCount || 0,
+        })),
+        total: response.total,
+        error: null,
+      };
     } else {
       // Jika limit adalah null, ambil semua data (unlimited)
       let currentPage = 1;
+      const maxPages = 100; // Tambahkan batas maksimum untuk menghindari loop tak terbatas
       while (true) {
-        const endpoint = `campaign/get?page=${currentPage}&search=${search}`;
+        const endpoint = `campaign/get?page=${currentPage}&search=${encodeURIComponent(
+          search
+        )}`;
         const response = await fetchAPI<{
           data: Campaign[];
           total: number;
@@ -248,23 +283,31 @@ export const fetchAllCampaigns = async (
           },
         });
 
-        allData = [...allData, ...response.data];
+        allData = [
+          ...allData,
+          ...response.data.map((campaign) => ({
+            ...campaign,
+            detailStatuses: campaign.detailStatuses || { Delivered: 0, Read: 0 },
+            detailCount: campaign.detailCount || 0,
+          })),
+        ];
         total = response.total;
 
-        if (response.data.length === 0) break;
+        if (response.data.length === 0 || currentPage >= maxPages) break;
         currentPage++;
       }
 
       return { data: allData, total, error: null };
     }
   } catch (error) {
-    console.error("Error in fetchAllCampaigns:", error);
+    console.error("Error in fetchAllCampaigns:", { error, page, limit, search });
     if (error instanceof Error) {
       return { data: [], total: 0, error: error.message };
     }
     return { data: [], total: 0, error: "Terjadi kesalahan yang tidak diketahui." };
   }
 };
+
 
 
 
@@ -390,6 +433,13 @@ export const fetchCampaignDetail = async (
     };
   }
 };
+
+
+
+
+
+
+
 
 
 

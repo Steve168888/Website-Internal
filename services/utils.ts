@@ -89,4 +89,90 @@ export const formatDate = (dateString: string | null): string => {
   return `${day} ${month} ${year} ${time}`;
 };
 
-  
+
+export const averageSuccessCalculate = (
+  campaigns: Array<{ detailStatuses?: { Delivered?: number; Read?: number; Failed?: number; Sent?: number; Pending?: number } }>
+): { averageSuccess: number; totalReadDelivered: number; totalAttempts: number } => {
+  // Hitung total Read + Delivered
+  const totalReadDelivered = campaigns.reduce((total, campaign) => {
+    const delivered = campaign.detailStatuses?.Delivered || 0;
+    const read = campaign.detailStatuses?.Read || 0;
+    return total + delivered + read;
+  }, 0);
+
+  // Hitung total attempts (semua status)
+  const totalAttempts = campaigns.reduce((sum, campaign) => {
+    const { Delivered = 0, Read = 0, Failed = 0, Sent = 0, Pending = 0 } = campaign.detailStatuses || {};
+    return sum + Delivered + Read + Failed + Sent + Pending;
+  }, 0);
+
+  // Hitung rata-rata keberhasilan
+  const averageSuccess = totalAttempts > 0 ? (totalReadDelivered / totalAttempts) * 100 : 0;
+
+  return { averageSuccess, totalReadDelivered, totalAttempts };
+};
+
+
+
+
+export const bestDayAndTimeCalculate = (
+  campaigns: Array<{
+    created_at?: string;
+    detailStatuses?: {
+      Delivered?: number;
+      Read?: number;
+      Failed?: number;
+      Sent?: number;
+      Pending?: number;
+    };
+  }>
+): { bestDay: string | null; bestTime: string | null; successRate: number } => {
+  const dayHourStats: Record<string, { read: number; total: number }> = {};
+
+  campaigns.forEach((campaign) => {
+    const createdAt = campaign.created_at;
+    const detailStatuses = campaign.detailStatuses || {};
+    const totalMessages =
+      (detailStatuses.Delivered || 0) +
+      (detailStatuses.Failed || 0) +
+      (detailStatuses.Sent || 0) +
+      (detailStatuses.Pending || 0);
+
+    if (createdAt && totalMessages > 0) {
+      const date = new Date(createdAt);
+      const day = date.toLocaleString("en-US", { weekday: "long" });
+      const hour = date.getHours();
+      const key = `${day}-${hour}`;
+
+      if (!dayHourStats[key]) {
+        dayHourStats[key] = { read: 0, total: 0 };
+      }
+
+      dayHourStats[key].read += detailStatuses.Read || 0;
+      dayHourStats[key].total += totalMessages;
+    }
+  });
+
+  let bestDay = null;
+  let bestTime = null;
+  let highestSuccessRate = 0;
+
+  Object.entries(dayHourStats).forEach(([key, stats]) => {
+    const successRate = stats.total > 0 ? stats.read / stats.total : 0;
+    if (successRate > highestSuccessRate) {
+      highestSuccessRate = successRate;
+      [bestDay, bestTime] = key.split("-");
+    }
+  });
+
+  return {
+    bestDay,
+    bestTime: bestTime ? `${bestTime}:00` : null,
+    successRate: Math.round(highestSuccessRate * 100),
+  };
+};
+
+
+
+
+

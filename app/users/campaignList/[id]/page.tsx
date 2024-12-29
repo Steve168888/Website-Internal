@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { fetchCampaigns } from "@/services/api";
 import { handlePagination, handleSearch, HidePagination } from "@/services/utils";
 import { useParams, useRouter } from "next/navigation";
+import ChartAnalytics from "./chartAnalytics/chartAnalytics";
 
 interface Campaign {
   campaign_id: string;
@@ -168,6 +169,11 @@ const CampaignList = () => {
             </button>
           </div>
         )}
+      </div>
+
+      {/* ChartAnalytics */}
+      <div className="mt-6">
+        <ChartAnalytics />
       </div>
     </div>
   );

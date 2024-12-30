@@ -73,7 +73,6 @@ const ChartAnalytics = () => {
       {/* Total Campaigns */}
       <div className="bg-gray-800 rounded-lg shadow-md p-6 w-1/2 text-center flex flex-col justify-center items-center">
         <h3 className="text-white text-lg font-semibold">Total Campaigns</h3>
-        <p className="text-sm text-gray-400 mb-2">Jumlah semua kampanye yang telah dikirim</p>
         {loading ? (
           <p className="text-2xl text-gray-400 font-bold">Loading...</p>
         ) : error ? (
@@ -85,8 +84,7 @@ const ChartAnalytics = () => {
 
       {/* Avg Success */}
       <div className="bg-gray-800 rounded-lg shadow-md p-6 w-1/2 text-center flex flex-col justify-center items-center">
-        <h3 className="text-white text-lg font-semibold">Avg Success</h3>
-        <p className="text-sm text-gray-400 mb-2">Rata-rata keberhasilan kampanye</p>
+        <h3 className="text-white text-lg font-semibold">Average Success</h3>
         <p className="text-2xl text-teal-400 font-bold">
           {loading ? "Loading..." : `${avgSuccess.toFixed(2)}%`}
         </p>

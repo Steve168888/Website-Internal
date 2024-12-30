@@ -94,17 +94,17 @@ const CampaignDetail = () => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "delivered":
-        return "px-3 py-1 rounded-lg bg-green-600 text-white text-sm font-medium";
+        return "px-3 py-1 rounded-lg bg-green-500 text-white text-sm font-medium";
       case "failed":
-        return "px-3 py-1 rounded-lg bg-red-600 text-white text-sm font-medium";
+        return "px-3 py-1 rounded-lg bg-red-500 text-white text-sm font-medium";
       case "sent":
-        return "px-3 py-1 rounded-lg bg-orange-600 text-white text-sm font-medium";
+        return "px-3 py-1 rounded-lg bg-orange-500 text-white text-sm font-medium";
       case "pending":
-        return "px-3 py-1 rounded-lg bg-yellow-600 text-black text-sm font-medium";
+        return "px-3 py-1 rounded-lg bg-yellow-500 text-black text-sm font-medium";
       case "read":
-        return "px-3 py-1 rounded-lg bg-blue-600 text-white text-sm font-medium";
+        return "px-3 py-1 rounded-lg bg-blue-500 text-white text-sm font-medium";
       default:
-        return "px-3 py-1 rounded-lg bg-gray-600 text-white text-sm font-medium";
+        return "px-3 py-1 rounded-lg bg-gray-500 text-white text-sm font-medium";
     }
   };
 
@@ -216,7 +216,7 @@ const CampaignDetail = () => {
             <tr>
               <th className="px-6 py-3">Recipient</th>
               <th className="px-6 py-3">Customer</th>
-              <th className="px-6 py-3">Status</th>
+              <th className="px-6 py-3 text-center">Status</th>
               <th className="px-6 py-3">Message</th>
             </tr>
           </thead>

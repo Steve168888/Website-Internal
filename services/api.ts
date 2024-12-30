@@ -219,11 +219,13 @@ interface Campaign {
 export const fetchAllCampaigns = async (
   page: number = 1,
   limit: number | null = null, // Limit null berarti ambil semua data
-  search: string = ""
+  search: string = "",
+  order?: string, // Parameter opsional
+  sort?: number // Parameter opsional
 ): Promise<{
-  data: Campaign[]; // Data dengan interface Campaign yang sudah diperbarui
-  total: number; // Total semua kampanye
-  error: string | null; // Pesan error jika ada
+  data: Campaign[];
+  total: number;
+  error: string | null;
 }> => {
   try {
     const token = localStorage.getItem("token");
@@ -235,72 +237,40 @@ export const fetchAllCampaigns = async (
       };
     }
 
-    let allData: Campaign[] = [];
-    let total = 0;
-
+    let queryParams = `page=${page}&search=${encodeURIComponent(search)}`;
     if (limit !== null) {
-      // Jika limit ditentukan, ambil data sesuai limit
-      const endpoint = `campaign/get?limit=${limit}&page=${page}&search=${encodeURIComponent(
-        search
-      )}`;
-      const response = await fetchAPI<{
-        data: Campaign[];
-        total: number;
-      }>(endpoint, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      // Kembalikan data dengan format yang sesuai
-      return {
-        data: response.data.map((campaign) => ({
-          ...campaign,
-          detailStatuses: campaign.detailStatuses || { Delivered: 0, Read: 0 },
-          detailCount: campaign.detailCount || 0,
-        })),
-        total: response.total,
-        error: null,
-      };
-    } else {
-      // Jika limit adalah null, ambil semua data (unlimited)
-      let currentPage = 1;
-      const maxPages = 100; // Tambahkan batas maksimum untuk menghindari loop tak terbatas
-      while (true) {
-        const endpoint = `campaign/get?page=${currentPage}&search=${encodeURIComponent(
-          search
-        )}`;
-        const response = await fetchAPI<{
-          data: Campaign[];
-          total: number;
-        }>(endpoint, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        allData = [
-          ...allData,
-          ...response.data.map((campaign) => ({
-            ...campaign,
-            detailStatuses: campaign.detailStatuses || { Delivered: 0, Read: 0 },
-            detailCount: campaign.detailCount || 0,
-          })),
-        ];
-        total = response.total;
-
-        if (response.data.length === 0 || currentPage >= maxPages) break;
-        currentPage++;
-      }
-
-      return { data: allData, total, error: null };
+      queryParams += `&limit=${limit}`;
     }
+    if (order) {
+      queryParams += `&order=${order}`;
+    }
+    if (sort !== undefined) {
+      queryParams += `&sort=${sort}`;
+    }
+
+    const endpoint = `campaign/get?${queryParams}`;
+    const response = await fetchAPI<{
+      data: Campaign[];
+      total: number;
+    }>(endpoint, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    return {
+      data: response.data.map((campaign) => ({
+        ...campaign,
+        detailStatuses: campaign.detailStatuses || { Delivered: 0, Read: 0 },
+        detailCount: campaign.detailCount || 0,
+      })),
+      total: response.total,
+      error: null,
+    };
   } catch (error) {
-    console.error("Error in fetchAllCampaigns:", { error, page, limit, search });
+    console.error("Error in fetchAllCampaigns:", { error, page, limit, search, order, sort });
     if (error instanceof Error) {
       return { data: [], total: 0, error: error.message };
     }

@@ -71,7 +71,7 @@ const Sidebar = () => {
             )}`}
           >
             <FiUser className="text-xl" />
-            <span>Users</span>
+            <span>Account</span>
           </Link>
           <Link
             href="/auth/login"

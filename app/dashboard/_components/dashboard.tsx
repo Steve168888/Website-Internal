@@ -5,20 +5,7 @@ import { FaUsers, FaBox } from "react-icons/fa";
 import Link from "next/link";
 import { formatDate } from "@/services/utils";
 
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import { Bar } from "react-chartjs-2";
 import { fetchAccount, fetchAllCampaigns } from "@/services/api";
-
-// Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const Dashboard = () => {
   const [totalAccounts, setTotalAccounts] = useState<number>(0);
@@ -63,35 +50,6 @@ const Dashboard = () => {
 
     fetchTotalCampaignsData();
   }, []);
-
-  const data = {
-    labels: ["January", "February", "March", "April", "May", "June"],
-    datasets: [
-      {
-        label: "Sales",
-        data: [120, 190, 300, 500, 200, 300],
-        backgroundColor: "rgba(75, 192, 192, 0.5)",
-      },
-      {
-        label: "Revenue",
-        data: [150, 230, 250, 450, 350, 400],
-        backgroundColor: "rgba(153, 102, 255, 0.5)",
-      },
-    ],
-  };
-
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top" as const,
-      },
-      title: {
-        display: true,
-        text: "Sales and Revenue Chart",
-      },
-    },
-  };
 
   return (
     <div className="flex flex-col gap-6 p-4">
@@ -198,14 +156,6 @@ const Dashboard = () => {
               </tr>
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Graph */}
-      <div className="bg-[#1E293B] rounded-lg p-4 shadow-md">
-        <h2 className="text-gray-400 font-semibold mb-4">Graph Component</h2>
-        <div style={{ width: "100%", maxWidth: "600px", margin: "0 auto" }}>
-          <Bar data={data} options={options} />
         </div>
       </div>
     </div>

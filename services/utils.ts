@@ -1,4 +1,5 @@
 import { NextRouter } from "next/router";
+import dayjs from "dayjs";
 
 
 export const handleLogout = (router: NextRouter) => {
@@ -129,6 +130,10 @@ export const bestDayAndTimeCalculate = (
 ): { bestDay: string | null; bestTime: string | null; successRate: number } => {
   const dayHourStats: Record<string, { read: number; total: number }> = {};
 
+  const isValidDate = (dateString: string): boolean => {
+    return dayjs(dateString).isValid(); // Menggunakan dayjs untuk validasi
+  };
+
   campaigns.forEach((campaign) => {
     const createdAt = campaign.created_at;
     const detailStatuses = campaign.detailStatuses || {};
@@ -138,10 +143,11 @@ export const bestDayAndTimeCalculate = (
       (detailStatuses.Sent || 0) +
       (detailStatuses.Pending || 0);
 
-    if (createdAt && totalMessages > 0) {
-      const date = new Date(createdAt);
-      const day = date.toLocaleString("en-US", { weekday: "long" });
-      const hour = date.getHours();
+    console.log("Checking created_at:", createdAt);
+    if (createdAt && isValidDate(createdAt) && totalMessages > 0) {
+      const date = dayjs(createdAt); // Menggunakan dayjs untuk parsing
+      const day = date.format("dddd"); // Mendapatkan nama hari
+      const hour = date.hour(); // Mendapatkan jam
       const key = `${day}-${hour}`;
 
       if (!dayHourStats[key]) {
@@ -150,6 +156,8 @@ export const bestDayAndTimeCalculate = (
 
       dayHourStats[key].read += detailStatuses.Read || 0;
       dayHourStats[key].total += totalMessages;
+    } else {
+      console.warn("Invalid or missing created_at:", createdAt);
     }
   });
 
@@ -162,17 +170,14 @@ export const bestDayAndTimeCalculate = (
     if (successRate > highestSuccessRate) {
       highestSuccessRate = successRate;
       [bestDay, bestTime] = key.split("-");
+      console.log("Parsed bestDay:", bestDay, "bestTime:", bestTime);
+      bestTime = bestTime ? `${bestTime.padStart(2, "0")}:00` : null; // Tambahkan padding untuk memastikan format HH:mm
     }
   });
 
   return {
     bestDay,
-    bestTime: bestTime ? `${bestTime}:00` : null,
-    successRate: Math.round(highestSuccessRate * 100),
+    bestTime,
+    successRate: Math.round(highestSuccessRate * 100), // Mengembalikan success rate dalam bentuk persen
   };
 };
-
-
-
-
-

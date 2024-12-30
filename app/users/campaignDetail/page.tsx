@@ -25,11 +25,24 @@ interface DetailStatuses {
   Read: number;
 }
 
+interface Detail {
+  recipient: string;
+  customer: string;
+  status: string;
+  message: string;
+}
+
 const CampaignDetail = () => {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [detailStatuses, setDetailStatuses] = useState<DetailStatuses | null>(null);
+  const [details, setDetails] = useState<Detail[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const itemsPerPage = 10; // Number of items per page
 
   const router = useRouter();
 
@@ -48,13 +61,21 @@ const CampaignDetail = () => {
           return;
         }
 
-        const { campaign, detailStatuses, error } = await fetchCampaignDetail(campaignId, accountId);
+        const {
+          campaign,
+          detailStatuses,
+          details,
+          pagination,
+          error,
+        } = await fetchCampaignDetail(campaignId, accountId, currentPage, itemsPerPage);
 
         if (error) {
           setError(error);
         } else {
           setCampaign(campaign);
           setDetailStatuses(detailStatuses);
+          setDetails(details || []);
+          setTotalPages(pagination?.totalPages || 1);
         }
       } catch (err: unknown) {
         if (err instanceof Error) {
@@ -68,16 +89,41 @@ const CampaignDetail = () => {
     };
 
     fetchCampaignData();
-  }, []);
+  }, [currentPage]);
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "delivered":
+        return "px-3 py-1 rounded-lg bg-green-600 text-white text-sm font-medium";
+      case "failed":
+        return "px-3 py-1 rounded-lg bg-red-600 text-white text-sm font-medium";
+      case "sent":
+        return "px-3 py-1 rounded-lg bg-orange-600 text-white text-sm font-medium";
+      case "pending":
+        return "px-3 py-1 rounded-lg bg-yellow-600 text-black text-sm font-medium";
+      case "read":
+        return "px-3 py-1 rounded-lg bg-blue-600 text-white text-sm font-medium";
+      default:
+        return "px-3 py-1 rounded-lg bg-gray-600 text-white text-sm font-medium";
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
 
   if (loading) return <div className="text-center text-white">Loading...</div>;
   if (error) return <div className="text-center text-red-500 font-bold">{error}</div>;
 
   return (
     <div className="container mx-auto p-6 bg-[#0D1B2A] text-white min-h-screen">
-        <h1 className="text-2xl font-bold mb-6 hover:text-gray-300 transition-all duration-200 cursor-pointer">
-          Campaign Details
-        </h1>
+      <h1 className="text-2xl font-bold mb-6 hover:text-gray-300 transition-all duration-200 cursor-pointer">
+        Campaign Details
+      </h1>
 
       {/* Informasi Utama */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -109,12 +155,11 @@ const CampaignDetail = () => {
       </div>
 
       {/* Statistik */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+            {/* Statistik */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
         <div className="bg-gray-800 p-4 rounded-lg shadow text-center hover:bg-gray-700 transition-all duration-200">
           <AiOutlineCheckCircle className="text-green-400 text-4xl mx-auto hover:text-green-500 transition-all duration-200" />
-          <h2 className="text-lg font-bold mt-4 hover:text-gray-300 transition-all duration-200">
-            DELIVERED
-          </h2>
+          <h2 className="text-lg font-bold mt-4 hover:text-gray-300 transition-all duration-200">DELIVERED</h2>
           <p className="text-3xl font-bold mt-4 text-green-400 hover:text-green-500 transition-all duration-200">
             {detailStatuses?.Delivered || 0}
           </p>
@@ -122,9 +167,7 @@ const CampaignDetail = () => {
 
         <div className="bg-gray-800 p-4 rounded-lg shadow text-center hover:bg-gray-700 transition-all duration-200">
           <AiOutlineCloseCircle className="text-red-400 text-4xl mx-auto hover:text-red-500 transition-all duration-200" />
-          <h2 className="text-lg font-bold mt-4 hover:text-gray-300 transition-all duration-200">
-            FAILED
-          </h2>
+          <h2 className="text-lg font-bold mt-4 hover:text-gray-300 transition-all duration-200">FAILED</h2>
           <p className="text-3xl font-bold mt-4 text-red-400 hover:text-red-500 transition-all duration-200">
             {detailStatuses?.Failed || 0}
           </p>
@@ -132,9 +175,7 @@ const CampaignDetail = () => {
 
         <div className="bg-gray-800 p-4 rounded-lg shadow text-center hover:bg-gray-700 transition-all duration-200">
           <FiSend className="text-orange-400 text-4xl mx-auto hover:text-orange-500 transition-all duration-200" />
-          <h2 className="text-lg font-bold mt-4 hover:text-gray-300 transition-all duration-200">
-            SENT
-          </h2>
+          <h2 className="text-lg font-bold mt-4 hover:text-gray-300 transition-all duration-200">SENT</h2>
           <p className="text-3xl font-bold mt-4 text-orange-400 hover:text-orange-500 transition-all duration-200">
             {detailStatuses?.Sent || 0}
           </p>
@@ -142,9 +183,7 @@ const CampaignDetail = () => {
 
         <div className="bg-gray-800 p-4 rounded-lg shadow text-center hover:bg-gray-700 transition-all duration-200">
           <MdOutlineMarkEmailRead className="text-yellow-400 text-4xl mx-auto hover:text-yellow-500 transition-all duration-200" />
-          <h2 className="text-lg font-bold mt-4 hover:text-gray-300 transition-all duration-200">
-            PENDING
-          </h2>
+          <h2 className="text-lg font-bold mt-4 hover:text-gray-300 transition-all duration-200">PENDING</h2>
           <p className="text-3xl font-bold mt-4 text-yellow-400 hover:text-yellow-500 transition-all duration-200">
             {detailStatuses?.Pending || 0}
           </p>
@@ -152,9 +191,7 @@ const CampaignDetail = () => {
 
         <div className="bg-gray-800 p-4 rounded-lg shadow text-center hover:bg-gray-700 transition-all duration-200">
           <FaEye className="text-blue-400 text-4xl mx-auto hover:text-blue-500 transition-all duration-200" />
-          <h2 className="text-lg font-bold mt-4 hover:text-gray-300 transition-all duration-200">
-            READ
-          </h2>
+          <h2 className="text-lg font-bold mt-4 hover:text-gray-300 transition-all duration-200">READ</h2>
           <p className="text-3xl font-bold mt-4 text-blue-400 hover:text-blue-500 transition-all duration-200">
             {detailStatuses?.Read || 0}
           </p>
@@ -171,6 +208,62 @@ const CampaignDetail = () => {
       >
         Back
       </button>
+
+      {/* Tabel Detail */}
+      <div className="bg-gray-800 text-white rounded-lg shadow-md overflow-hidden mt-6">
+        <table className="min-w-full text-left">
+          <thead className="bg-gray-700">
+            <tr>
+              <th className="px-6 py-3">Recipient</th>
+              <th className="px-6 py-3">Customer</th>
+              <th className="px-6 py-3">Status</th>
+              <th className="px-6 py-3">Message</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-600">
+            {details.map((detail, index) => (
+              <tr key={index} className="hover:bg-gray-600">
+                <td className="px-6 py-4">{detail.recipient}</td>
+                <td className="px-6 py-4">{detail.customer}</td>
+                <td className="px-6 py-4 text-center">
+                  <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(detail.status)}`}>
+                    {detail.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4">{detail.message}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-end mt-4">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={handlePrevious}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded bg-gray-700 text-white hover:bg-gray-600 transition-all duration-200 ${
+              currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            Previous
+          </button>
+          <span className="text-white font-medium">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={handleNext}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded bg-gray-700 text-white hover:bg-gray-600 transition-all duration-200 ${
+              currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+      
     </div>
   );
 };

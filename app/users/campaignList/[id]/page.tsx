@@ -12,7 +12,14 @@ interface Campaign {
   name: string;
   status: string;
   created_at: string;
-  schedule: string | null; // Tambahkan properti schedule
+  schedule: string | null;
+  detailStatuses?: {
+    Delivered?: number;
+    Read?: number;
+    Failed?: number;
+    Pending?: number;
+    Sent?: number;
+  };
 }
 
 const CampaignList = () => {
@@ -23,7 +30,6 @@ const CampaignList = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
-
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const itemsPerPage = 10;
@@ -37,7 +43,6 @@ const CampaignList = () => {
       }
 
       setLoading(true);
-      // Pemanggilan fungsi `fetchCampaigns` dengan id
       const { data, totalPages, error } = await fetchCampaigns(id, currentPage, itemsPerPage, searchTerm);
 
       if (error) {

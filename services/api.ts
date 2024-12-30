@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5000/api/v1';
+const BASE_URL = 'http://localhost:5001/api/v1';
 
 export const fetchAPI = async <T>(
   endpoint: string,
@@ -379,12 +379,32 @@ interface DetailStatuses {
   Read: number;
 }
 
+interface Detail {
+  customer: string;
+  recipient: string;
+  status: string;
+  message: string;
+  region: string;
+  created_at: string;
+}
+
+interface Pagination {
+  totalDetails: number;
+  totalPages: number;
+  page: number;
+  limit: number;
+}
+
 export const fetchCampaignDetail = async (
   campaignId: string,
-  accountId: string
+  accountId: string,
+  currentPage: number = 1, // Added for pagination
+  itemsPerPage: number = 10 // Added for pagination
 ): Promise<{
   campaign: Campaign | null;
   detailStatuses: DetailStatuses | null;
+  details: Detail[] | null;
+  pagination: Pagination | null;
   error: string | null;
 }> => {
   try {
@@ -393,14 +413,21 @@ export const fetchCampaignDetail = async (
       return {
         campaign: null,
         detailStatuses: null,
+        details: null,
+        pagination: null,
         error: "Token tidak tersedia. Silakan login terlebih dahulu.",
       };
     }
 
-    const endpoint = `campaign-detail/get/${campaignId}?account_id=${accountId}`;
+    // Add pagination query parameters
+    const endpoint = `campaign-detail/get/${campaignId}?account_id=${accountId}&page=${currentPage}&limit=${itemsPerPage}`;
+
+    // API call with fetchAPI
     const response = await fetchAPI<{
       campaign: Campaign;
       detailStatuses: DetailStatuses;
+      details: Detail[];
+      pagination: Pagination;
     }>(endpoint, {
       method: "GET",
       headers: {
@@ -409,39 +436,128 @@ export const fetchCampaignDetail = async (
       },
     });
 
-    // Destructuring response untuk mengembalikan data
-    const { campaign, detailStatuses } = response;
+    // Validate the response
+    if (
+      !response ||
+      !response.campaign ||
+      !response.detailStatuses ||
+      !response.details ||
+      !response.pagination
+    ) {
+      return {
+        campaign: null,
+        detailStatuses: null,
+        details: null,
+        pagination: null,
+        error: "Data tidak valid dari server.",
+      };
+    }
+
+    const { campaign, detailStatuses, details, pagination } = response;
 
     return {
       campaign,
       detailStatuses,
+      details,
+      pagination,
       error: null,
     };
   } catch (error) {
     console.error("Error in fetchCampaignDetail:", error);
+
     if (error instanceof Error) {
       return {
         campaign: null,
         detailStatuses: null,
-        error: error.message,
+        details: null,
+        pagination: null,
+        error: error.message || "Terjadi kesalahan.",
       };
     }
+
     return {
       campaign: null,
       detailStatuses: null,
+      details: null,
+      pagination: null,
       error: "Terjadi kesalahan yang tidak diketahui.",
     };
   }
 };
 
 
+/////////////////////////////////////////////////////////////////////////////////////
 
 
+interface CreateAccountData {
+  name: string;
+  username: string;
+  email: string;
+  balance: string; // Balance as a string based on your example
+}
+
+interface CreateAccountResponse {
+  success: boolean;
+  message: string | null;
+  data?: {
+    _id: string;
+    name: string;
+    username: string;
+    email: string;
+    balance: number;
+  };
+  error?: string;
+}
+
+export const createAccount = async (
+  accountData: CreateAccountData
+): Promise<CreateAccountResponse> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return {
+        success: false,
+        message: "Token is not available. Please log in first.",
+        error: "Token missing",
+      };
+    }
+
+    const endpoint = `account/create`;
+    const response = await fetchAPI<{
+      data: {
+        _id: string;
+        name: string;
+        username: string;
+        email: string;
+        balance: number;
+      };
+    }>(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(accountData),
+    });
+
+    const { data } = response;
+    return {
+      success: true,
+      message: "Account created successfully.",
+      data,
+    };
+  } catch (error) {
+    console.error("Error in createAccount:", error);
+    return {
+      success: false,
+      message: "An unexpected error occurred.",
+      error: (error as Error).message,
+    };
+  }
+};
 
 
-
-
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 

@@ -97,7 +97,7 @@ const Dashboard = () => {
           <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4 cursor-pointer hover:bg-gray-700 transition-all duration-200">
             <FaUsers className="text-4xl text-blue-400" />
             <div>
-              <h3 className="text-gray-400 font-semibold">Total Akun</h3>
+              <h3 className="text-gray-400 font-semibold">Total Accounts</h3>
               {loadingAccounts ? (
                 <p className="text-white text-xl font-bold">Memuat...</p>
               ) : errorAccounts ? (
@@ -114,7 +114,7 @@ const Dashboard = () => {
           <div className="bg-[#1E293B] rounded-lg p-4 shadow-md flex items-center gap-4 hover:bg-gray-700 transition-all duration-200">
             <FaBox className="text-4xl text-yellow-400" />
             <div>
-              <h3 className="text-gray-400 font-semibold">Total Campaign</h3>
+              <h3 className="text-gray-400 font-semibold">Total Campaigns</h3>
               {loadingCampaigns ? (
                 <p className="text-white text-xl font-bold">Memuat...</p>
               ) : errorCampaigns ? (
@@ -130,7 +130,7 @@ const Dashboard = () => {
 
       {/* Campaign Terbaru */}
       <div className="bg-[#1E293B] rounded-lg p-4 shadow-md">
-        <h2 className="text-gray-400 font-semibold mb-4">Campaign Terbaru</h2>
+        <h2 className="text-gray-400 font-semibold mb-4">Latest Campaigns</h2>
         {errorLatestCampaigns ? (
           <p className="text-red-500 text-center">{errorLatestCampaigns}</p>
         ) : (
@@ -138,10 +138,10 @@ const Dashboard = () => {
             <table className="min-w-full">
               <thead>
                 <tr>
-                  <th className="text-gray-500 text-sm font-semibold py-2 text-left">Nama</th>
+                  <th className="text-gray-500 text-sm font-semibold py-2 text-left">Name</th>
                   <th className="text-gray-500 text-sm font-semibold py-2 text-center">Status</th>
-                  <th className="text-gray-500 text-sm font-semibold py-2 text-center">Dibuat Pada</th>
-                  <th className="text-gray-500 text-sm font-semibold py-2 text-center">Jadwal</th>
+                  <th className="text-gray-500 text-sm font-semibold py-2 text-center">Created At</th>
+                  <th className="text-gray-500 text-sm font-semibold py-2 text-center">Schedule</th>
                 </tr>
               </thead>
               <tbody>

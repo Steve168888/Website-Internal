@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { fetchAccount } from "@/services/api";
-import { handlePagination, handleSearch, HidePagination } from "@/services/utils";
+import { fetchAccount, deleteAccount } from "@/services/api";
+import { handlePagination, HidePagination } from "@/services/utils";
 import Chart from "@/app/users/_components/chart/chart";
 import CreateAccount from "./createAccount/createAccount";
 
@@ -21,7 +20,7 @@ const User = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [total_pages, setTotal_pages] = useState<number>(1);
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchValue, setSearchValue] = useState<string>(""); // Gunakan state untuk value
 
   const [isModalOpen, setModalOpen] = useState<boolean>(false); // Modal state
   const itemsPerPage = 10;
@@ -29,7 +28,7 @@ const User = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const { data, total_pages, error } = await fetchAccount(currentPage, itemsPerPage, searchTerm);
+      const { data, total_pages, error } = await fetchAccount(currentPage, itemsPerPage, "", searchValue); // Gunakan searchValue
 
       if (error) {
         setError(error);
@@ -42,7 +41,19 @@ const User = () => {
     };
 
     fetchData();
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchValue]); // searchValue sebagai dependency
+
+  const handleDelete = async (accountId: string) => {
+    if (confirm("Are you sure you want to delete this account?")) {
+      const result = await deleteAccount(accountId);
+      if (result.success) {
+        alert("Account deleted successfully!");
+        setUsers((prev) => prev.filter((user) => user._id !== accountId));
+      } else {
+        alert(`Failed to delete account: ${result.message}`);
+      }
+    }
+  };
 
   const { handlePrevious, handleNext } = handlePagination(currentPage, total_pages, setCurrentPage);
   const hidePagination = HidePagination(users.length, total_pages, undefined);
@@ -65,8 +76,11 @@ const User = () => {
             <input
               type="text"
               placeholder="Search Users..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e, setSearchTerm, setCurrentPage)}
+              value={searchValue} // Gunakan searchValue
+              onChange={(e) => {
+                setSearchValue(e.target.value); // Update searchValue
+                setCurrentPage(1); // Reset ke halaman pertama saat melakukan pencarian
+              }}
               className="px-4 py-2 pl-10 w-full rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
             <svg
@@ -102,7 +116,7 @@ const User = () => {
               <th className="px-6 py-3">Email</th>
               <th className="px-6 py-3 text-center">Balance</th>
               <th className="px-6 py-3 text-center">Total Campaign</th>
-              <th className="px-6 py-3 text-center">Link</th>
+              <th className="px-6 py-3 text-center">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-600">
@@ -113,13 +127,19 @@ const User = () => {
                   <td className="px-6 py-4">{user.email}</td>
                   <td className="px-6 py-4 text-center">${user.balance.toFixed(2)}</td>
                   <td className="px-6 py-4 text-center">{user.campaignCount}</td>
-                  <td className="px-6 py-4 text-center">
-                    <Link
-                      href={`/users/campaignList/${user._id}`}
-                      className="text-blue-400 hover:underline"
+                  <td className="px-6 py-4 text-center flex justify-center space-x-2">
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all duration-200"
+                      onClick={() => window.location.href = `/users/campaignList/${user._id}`}
                     >
                       View
-                    </Link>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user._id)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all duration-200"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))
@@ -165,7 +185,7 @@ const User = () => {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <CreateAccount onClose={closeModal}/>
+          <CreateAccount onClose={closeModal} />
         </div>
       )}
     </div>

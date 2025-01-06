@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { fetchCampaigns } from "@/services/api";
+import { fetchCampaigns, deleteCampaign } from "@/services/api";
 import { handlePagination, handleSearch, HidePagination } from "@/services/utils";
 import { useParams, useRouter } from "next/navigation";
 import ChartAnalytics from "./chartAnalytics/chartAnalytics";
@@ -23,14 +23,15 @@ interface Campaign {
 }
 
 const CampaignList = () => {
-  const { id } = useParams();
+  const params = useParams(); // Perbaiki pengambilan id
+  const id = params?.id as string; // Pastikan id adalah string
   const router = useRouter();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [valueTerm, setSearchTerm] = useState<string>("");
 
   const itemsPerPage = 10;
 
@@ -43,7 +44,7 @@ const CampaignList = () => {
       }
 
       setLoading(true);
-      const { data, totalPages, error } = await fetchCampaigns(id, currentPage, itemsPerPage, searchTerm);
+      const { data, totalPages, error } = await fetchCampaigns(id, currentPage, itemsPerPage, valueTerm);
 
       if (error) {
         setError(error);
@@ -56,12 +57,24 @@ const CampaignList = () => {
     };
 
     fetchData();
-  }, [id, currentPage, searchTerm]);
+  }, [id, currentPage, valueTerm]);
 
   const { handlePrevious, handleNext } = handlePagination(currentPage, totalPages, setCurrentPage);
 
   // Panggil fungsi HidePagination untuk menentukan apakah pagination perlu ditampilkan
   const hidePagination = HidePagination(campaigns.length, totalPages, undefined);
+
+  const handleDelete = async (campaignId: string) => {
+    if (confirm("Are you sure you want to delete this campaign?")) {
+      const result = await deleteCampaign(campaignId, id);
+      if (result.success) {
+        alert("Campaign deleted successfully!");
+        setCampaigns((prev) => prev.filter((campaign) => campaign.campaign_id !== campaignId));
+      } else {
+        alert(`Failed to delete campaign: ${result.message}`);
+      }
+    }
+  };
 
   if (loading) return <div className="text-center text-white">Loading...</div>;
   if (error) return <div className="text-center text-red-500 font-bold">{error}</div>;
@@ -77,7 +90,7 @@ const CampaignList = () => {
           <input
             type="text"
             placeholder="Search Campaigns..."
-            value={searchTerm}
+            value={valueTerm}
             onChange={(e) => handleSearch(e, setSearchTerm, setCurrentPage)}
             className="px-4 py-2 pl-10 w-full rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-gray-500"
           />
@@ -101,50 +114,54 @@ const CampaignList = () => {
       {/* Tabel Kampanye */}
       <div className="bg-gray-800 text-white rounded-lg shadow-md overflow-hidden">
         <table className="min-w-full text-left">
-        <thead className="bg-gray-700">
-          <tr>
-            <th className="px-6 py-3">Campaign Name</th> 
-            <th className="px-6 py-3 text-center">Status</th>
-            <th className="px-6 py-3 text-center">Created At</th> 
-            <th className="px-6 py-3 text-center">Schedule</th> 
-            <th className="px-6 py-3 text-center">Action</th> 
-          </tr>
-        </thead>
-          <tbody className="divide-y divide-gray-600">
-          {campaigns.length > 0 ? (
-            campaigns.map((campaign) => (
-              <tr key={campaign.campaign_id} className="hover:bg-gray-600">
-                <td className="px-6 py-4">{campaign.name}</td> 
-                <td className="px-6 py-4 text-center">{campaign.status}</td> 
-                <td className="px-6 py-4 text-center">{new Date(campaign.created_at).toLocaleString()}</td> 
-                <td className="px-6 py-4 text-center">
-                  {campaign.schedule ? new Date(campaign.schedule).toLocaleString() : "-"}
-                </td> 
-                <td className="px-6 py-4 text-center">
-                  <Link
-                    href={`/users/campaignDetail?campaign_id=${campaign.campaign_id}&account_id=${id}`}
-                    className="text-blue-400 hover:underline"
-                  >
-                    Detail
-                  </Link>
-                </td> 
-              </tr>
-            ))
-          ) : (
+          <thead className="bg-gray-700">
             <tr>
-              <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
-                There is no campaign data available
-              </td>
+              <th className="px-6 py-3">Campaign Name</th>
+              <th className="px-6 py-3 text-center">Status</th>
+              <th className="px-6 py-3 text-center">Created At</th>
+              <th className="px-6 py-3 text-center">Schedule</th>
+              <th className="px-6 py-3 text-center">Action</th>
             </tr>
-          )}
-        </tbody>
-
+          </thead>
+          <tbody className="divide-y divide-gray-600">
+            {campaigns.length > 0 ? (
+              campaigns.map((campaign) => (
+                <tr key={campaign.campaign_id} className="hover:bg-gray-600">
+                  <td className="px-6 py-4">{campaign.name}</td>
+                  <td className="px-6 py-4 text-center">{campaign.status}</td>
+                  <td className="px-6 py-4 text-center">{new Date(campaign.created_at).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-center">
+                    {campaign.schedule ? new Date(campaign.schedule).toLocaleString() : "-"}
+                  </td>
+                  <td className="px-6 py-4 text-center flex justify-center space-x-4">
+                    <Link
+                      href={`/users/campaignDetail?campaign_id=${campaign.campaign_id}&account_id=${id}`}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all duration-200"
+                    >
+                      Detail
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(campaign.campaign_id)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all duration-200"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
+                  There is no campaign data available
+                </td>
+              </tr>
+            )}
+          </tbody>
         </table>
       </div>
 
       {/* Pagination */}
       <div className="flex justify-between items-center mt-4">
-        {/* Tombol Back selalu terlihat */}
         <button
           onClick={() => router.push("/users")}
           className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50 hover:bg-gray-600 hover:text-gray-100 transition-all duration-200"
@@ -152,7 +169,6 @@ const CampaignList = () => {
           Back
         </button>
 
-        {/* Pagination */}
         {!hidePagination && (
           <div className="flex space-x-2 items-center justify-between">
             <button

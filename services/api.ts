@@ -77,7 +77,8 @@ interface Account {
 export const fetchAccount = async (
   page: number,
   limit: number,
-  search: string = ""
+  search: string = "",
+  value: string = "" // Tambahkan parameter value
 ): Promise<{
   data: Account[];
   total_pages: number;
@@ -95,7 +96,8 @@ export const fetchAccount = async (
       };
     }
 
-    const endpoint = `account/get?page=${page}&limit=${limit}&search=${search}`;
+    // Tambahkan value ke endpoint URL
+    const endpoint = `account/get?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&value=${encodeURIComponent(value)}`;
     const response = await fetchAPI<{
       data: Account[];
       total_pages: number;
@@ -146,7 +148,7 @@ export const fetchCampaigns = async (
   accountId: string,
   page: number,
   limit: number,
-  search: string = ""
+  value: string = ""
 ): Promise<{
   data: Campaign[];
   totalPages: number;
@@ -164,7 +166,7 @@ export const fetchCampaigns = async (
       };
     }
 
-    const endpoint = `campaign/get?account_id=${accountId}&limit=${limit}&page=${page}&search=${search}`;
+    const endpoint = `campaign/get?account_id=${accountId}&limit=${limit}&page=${page}&value=${value}`;
     const response = await fetchAPI<{
       data: Campaign[];
       totalPages: number;
@@ -531,3 +533,99 @@ export const createAccount = async (
 
 
 
+export const deleteAccount = async (
+  accountId: string // ID akun yang ingin dihapus
+): Promise<{
+  success: boolean;
+  message: string;
+}> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return {
+        success: false,
+        message: "Token tidak tersedia. Silakan login terlebih dahulu.",
+      };
+    }
+
+    const endpoint = `account/delete/${accountId}`;
+    const response = await fetchAPI<{
+      success: boolean;
+      message: string;
+    }>(endpoint, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (response.success) {
+      return {
+        success: true,
+        message: response.message || "Akun berhasil dihapus.",
+      };
+    }
+
+    return {
+      success: false,
+      message: response.message || "Gagal menghapus akun.",
+    };
+  } catch (error) {
+    console.error("Error in deleteAccount:", { error, accountId });
+    if (error instanceof Error) {
+      return { success: false, message: error.message };
+    }
+    return { success: false, message: "Terjadi kesalahan yang tidak diketahui." };
+  }
+};
+
+
+
+export const deleteCampaign = async (
+  campaignId: string, // ID campaign yang ingin dihapus
+  accountId: string // ID akun yang terkait dengan campaign
+): Promise<{
+  success: boolean;
+  message: string;
+}> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return {
+        success: false,
+        message: "Token tidak tersedia. Silakan login terlebih dahulu.",
+      };
+    }
+
+    const endpoint = `campaign/delete/${campaignId}?account_id=${accountId}`;
+    const response = await fetchAPI<{
+      success: boolean;
+      message: string;
+    }>(endpoint, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (response.success) {
+      return {
+        success: true,
+        message: response.message || "Campaign berhasil dihapus.",
+      };
+    }
+
+    return {
+      success: false,
+      message: response.message || "Gagal menghapus campaign.",
+    };
+  } catch (error) {
+    console.error("Error in deleteCampaign:", { error, campaignId, accountId });
+    if (error instanceof Error) {
+      return { success: false, message: error.message };
+    }
+    return { success: false, message: "Terjadi kesalahan yang tidak diketahui." };
+  }
+};

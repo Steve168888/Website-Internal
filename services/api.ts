@@ -1,3 +1,4 @@
+//const BASE_URL = 'https://a33fa46a-804b-471f-bd62-b4d4b4207cb2-00-xxvnqidktbm3.sisko.replit.dev/api/v1';
 const BASE_URL = 'http://localhost:5001/api/v1';
 
 export const fetchAPI = async <T>(

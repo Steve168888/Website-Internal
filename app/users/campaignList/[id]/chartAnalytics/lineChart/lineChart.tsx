@@ -11,11 +11,18 @@ import {
   Legend,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { useParams } from "next/navigation";
-import { fetchCampaigns } from "@/services/api";
 
 // Register Chart.js components
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
+
+// Define the type for campaign data
+interface Campaign {
+  created_at: string;
+  detailStatuses?: {
+    Delivered?: number;
+    Read?: number;
+  };
+}
 
 // Define the type for chart data
 interface ChartData {
@@ -31,72 +38,69 @@ interface ChartData {
   }[];
 }
 
-const LineChart = () => {
-  const { id: rawAccountId } = useParams(); // Dynamically fetch accountId
-  const accountId = Array.isArray(rawAccountId) ? rawAccountId[0] : rawAccountId; // Ensure it's a string
+// Define the props for LineChart
+interface LineChartProps {
+  campaigns: Campaign[];
+}
 
+const LineChart: React.FC<LineChartProps> = ({ campaigns }) => {
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!accountId || typeof accountId !== "string") {
-        setError("Invalid account ID.");
-        setLoading(false);
-        return;
-      }
+    if (!campaigns || campaigns.length === 0) {
+      setError("No campaign data available.");
+      setLoading(false);
+      return;
+    }
 
-      setLoading(true);
+    setLoading(true);
+    try {
+      const hourLabels = Array.from({ length: 24 }, (_, i) => `${i}:00`); // Labels for 24 hours
+      const deliveredCounts = Array(24).fill(0);
+      const readCounts = Array(24).fill(0);
 
-      try {
-        const { data } = await fetchCampaigns(accountId, 1, 10);
-        const hourLabels = Array.from({ length: 24 }, (_, i) => `${i}:00`); // Labels for 24 hours
-        const deliveredCounts = Array(24).fill(0);
-        const readCounts = Array(24).fill(0);
+      campaigns.forEach((campaign) => {
+        const createdDate = new Date(campaign.created_at);
+        const hour = createdDate.getHours();
 
-        data.forEach((campaign) => {
-          const createdDate = new Date(campaign.created_at);
-          const hour = createdDate.getHours();
+        deliveredCounts[hour] += campaign.detailStatuses?.Delivered || 0;
+        readCounts[hour] += campaign.detailStatuses?.Read || 0;
+      });
 
-          deliveredCounts[hour] += campaign.detailStatuses?.Delivered || 0;
-          readCounts[hour] += campaign.detailStatuses?.Read || 0;
-        });
+      setChartData({
+        labels: hourLabels,
+        datasets: [
+          {
+            label: "Delivered",
+            data: deliveredCounts,
+            borderColor: "rgba(255, 99, 132, 1)",
+            backgroundColor: "rgba(255, 99, 132, 0.2)",
+            tension: 0.4,
+            pointBackgroundColor: "rgba(255, 99, 132, 1)",
+            pointBorderColor: "rgba(255, 99, 132, 1)",
+          },
+          {
+            label: "Read",
+            data: readCounts,
+            borderColor: "rgba(75, 192, 192, 1)",
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            tension: 0.4,
+            pointBackgroundColor: "rgba(75, 192, 192, 1)",
+            pointBorderColor: "rgba(75, 192, 192, 1)",
+          },
+        ],
+      });
 
-        setChartData({
-          labels: hourLabels,
-          datasets: [
-            {
-              label: "Delivered",
-              data: deliveredCounts,
-              borderColor: "rgba(255, 99, 132, 1)",
-              backgroundColor: "rgba(255, 99, 132, 0.2)",
-              tension: 0.4,
-              pointBackgroundColor: "rgba(255, 99, 132, 1)",
-              pointBorderColor: "rgba(255, 99, 132, 1)",
-            },
-            {
-              label: "Read",
-              data: readCounts,
-              borderColor: "rgba(75, 192, 192, 1)",
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              tension: 0.4,
-              pointBackgroundColor: "rgba(75, 192, 192, 1)",
-              pointBorderColor: "rgba(75, 192, 192, 1)",
-            },
-          ],
-        });
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching line chart data:", err);
-        setError("Failed to load line chart data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [accountId]);
+      setError(null);
+    } catch (err) {
+      console.error("Error processing campaign data:", err);
+      setError("Failed to process campaign data.");
+    } finally {
+      setLoading(false);
+    }
+  }, [campaigns]);
 
   const options = {
     responsive: true,

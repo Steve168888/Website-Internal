@@ -26,68 +26,59 @@ const Dashboard = () => {
   const [totalAccounts, setTotalAccounts] = useState<number>(0);
   const [totalCampaigns, setTotalCampaigns] = useState<number>(0);
   const [latestCampaigns, setLatestCampaigns] = useState<Campaign[]>([]);
-  const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
-  const [loadingCampaigns, setLoadingCampaigns] = useState<boolean>(true);
-  const [loadingLatestCampaigns, setLoadingLatestCampaigns] = useState<boolean>(true);
-  const [errorAccounts, setErrorAccounts] = useState<string | null>(null);
-  const [errorCampaigns, setErrorCampaigns] = useState<string | null>(null);
-  const [errorLatestCampaigns, setErrorLatestCampaigns] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch total akun
   useEffect(() => {
-    const fetchTotalAccounts = async () => {
-      setLoadingAccounts(true);
-      const { total, error } = await fetchAccount(1, 10, "");
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-      if (error) {
-        setErrorAccounts(error);
-      } else {
-        setTotalAccounts(total);
-        setErrorAccounts(null);
+        // Fetch data secara paralel menggunakan Promise.all
+        const [accountRes, campaignsRes] = await Promise.all([
+          fetchAccount(1, 10, ""),
+          fetchAllCampaigns(1, 1000, ""), // Ambil semua campaign untuk total & sorting
+        ]);
+
+        // Set total accounts
+        if (accountRes.error) {
+          setError(accountRes.error);
+        } else {
+          setTotalAccounts(accountRes.total);
+        }
+
+        // Set total campaign dan sort 5 campaign terbaru
+        if (campaignsRes.error) {
+          setError(campaignsRes.error);
+        } else {
+          const allCampaigns = campaignsRes.data || [];
+
+          // Total campaign
+          setTotalCampaigns(allCampaigns.length);
+
+          // Sort campaign berdasarkan created_at descending (-1)
+          const sortedCampaigns = allCampaigns
+            .sort((a: Campaign, b: Campaign) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .slice(0, 5); // Ambil 5 campaign terbaru
+
+          setLatestCampaigns(sortedCampaigns);
+        }
+      } catch (err) {
+        setError("Terjadi kesalahan dalam mengambil data.");
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-      setLoadingAccounts(false);
     };
 
-    fetchTotalAccounts();
+    fetchData();
   }, []);
 
-  // Fetch total campaign
-  useEffect(() => {
-    const fetchTotalCampaigns = async () => {
-      setLoadingCampaigns(true);
-      const { total, error } = await fetchAllCampaigns(1, 10, "");
-
-      if (error) {
-        setErrorCampaigns(error);
-      } else {
-        setTotalCampaigns(total);
-        setErrorCampaigns(null);
-      }
-      setLoadingCampaigns(false);
-    };
-
-    fetchTotalCampaigns();
-  }, []);
-
-  // Fetch dan tampilkan daftar campaign yang di-sort
-  useEffect(() => {
-    const fetchSortedCampaigns = async () => {
-      setLoadingLatestCampaigns(true);
-
-      // Tambahkan parameter `order` dan `sort`
-      const { data, error } = await fetchAllCampaigns(1, 5, "", "created_at", -1);
-
-      if (error) {
-        setErrorLatestCampaigns(error);
-      } else {
-        setLatestCampaigns(data);
-        setErrorLatestCampaigns(null);
-      }
-      setLoadingLatestCampaigns(false);
-    };
-
-    fetchSortedCampaigns();
-  }, []);
+  if (loading) {
+    return <div className="text-center text-white">Memuat...</div>;
+  }
 
   return (
     <div className="flex flex-col gap-6 p-4">
@@ -98,10 +89,8 @@ const Dashboard = () => {
             <FaUsers className="text-4xl text-blue-400" />
             <div>
               <h3 className="text-gray-400 font-semibold">Total Accounts</h3>
-              {loadingAccounts ? (
-                <p className="text-white text-xl font-bold">Memuat...</p>
-              ) : errorAccounts ? (
-                <p className="text-red-500 text-sm">{errorAccounts}</p>
+              {error ? (
+                <p className="text-red-500 text-sm">{error}</p>
               ) : (
                 <p className="text-white text-2xl font-bold">{totalAccounts.toLocaleString()}</p>
               )}
@@ -115,10 +104,8 @@ const Dashboard = () => {
             <FaBox className="text-4xl text-yellow-400" />
             <div>
               <h3 className="text-gray-400 font-semibold">Total Campaigns</h3>
-              {loadingCampaigns ? (
-                <p className="text-white text-xl font-bold">Memuat...</p>
-              ) : errorCampaigns ? (
-                <p className="text-red-500 text-sm">{errorCampaigns}</p>
+              {error ? (
+                <p className="text-red-500 text-sm">{error}</p>
               ) : (
                 <p className="text-white text-2xl font-bold">{totalCampaigns.toLocaleString()}</p>
               )}
@@ -131,8 +118,8 @@ const Dashboard = () => {
       {/* Campaign Terbaru */}
       <div className="bg-[#1E293B] rounded-lg p-4 shadow-md">
         <h2 className="text-gray-400 font-semibold mb-4">Latest Campaigns</h2>
-        {errorLatestCampaigns ? (
-          <p className="text-red-500 text-center">{errorLatestCampaigns}</p>
+        {error ? (
+          <p className="text-red-500 text-center">{error}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full">
@@ -145,13 +132,7 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {loadingLatestCampaigns ? (
-                  <tr>
-                    <td colSpan={4} className="text-center text-white py-4">
-                      Memuat...
-                    </td>
-                  </tr>
-                ) : latestCampaigns.length === 0 ? (
+                {latestCampaigns.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="text-center text-gray-400 py-4">
                       Tidak ada campaign yang tersedia.

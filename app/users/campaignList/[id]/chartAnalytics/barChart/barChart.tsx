@@ -10,8 +10,6 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { useParams } from "next/navigation";
-import { fetchCampaigns } from "@/services/api";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -23,7 +21,6 @@ interface Campaign {
   };
 }
 
-// Definisikan tipe untuk chartData
 interface ChartData {
   labels: string[];
   datasets: {
@@ -33,79 +30,69 @@ interface ChartData {
   }[];
 }
 
-const BarChart = () => {
-  const { id: accountId } = useParams(); // Ambil accountId dari URL
+interface BarChartProps {
+  campaigns: Campaign[];
+}
+
+const BarChart: React.FC<BarChartProps> = ({ campaigns }) => {
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!accountId || typeof accountId !== "string") {
-        setError("Invalid account ID.");
-        setLoading(false);
-        return;
-      }
+    if (!campaigns || campaigns.length === 0) {
+      setError("No campaign data available.");
+      setLoading(false);
+      return;
+    }
 
-      setLoading(true);
-      try {
-        const response = await fetchCampaigns(accountId, 1, 10);
+    setLoading(true);
+    try {
+      const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const deliveredCounts = Array(7).fill(0);
+      const readCounts = Array(7).fill(0);
 
-        if (response.error) {
-          setError(response.error);
-        } else {
-          const { data } = response;
+      campaigns.forEach((campaign) => {
+        const createdDate = new Date(campaign.created_at);
+        const dayIndex = createdDate.getDay();
 
-          // Proses data menjadi grafik bar
-          const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-          const deliveredCounts = Array(7).fill(0);
-          const readCounts = Array(7).fill(0);
+        deliveredCounts[dayIndex] += campaign.detailStatuses?.Delivered || 0;
+        readCounts[dayIndex] += campaign.detailStatuses?.Read || 0;
+      });
 
-          data.forEach((campaign: Campaign) => {
-            const createdDate = new Date(campaign.created_at);
-            const dayIndex = createdDate.getDay();
+      const maxDelivered = Math.max(...deliveredCounts);
+      const maxRead = Math.max(...readCounts);
 
-            deliveredCounts[dayIndex] += campaign.detailStatuses?.Delivered || 0;
-            readCounts[dayIndex] += campaign.detailStatuses?.Read || 0;
-          });
+      const datasets = [
+        {
+          label: "Delivered",
+          data: deliveredCounts,
+          backgroundColor: deliveredCounts.map((value) =>
+            value === maxDelivered ? "rgba(255, 99, 132, 0.8)" : "rgba(75, 192, 192, 0.6)"
+          ),
+        },
+        {
+          label: "Read",
+          data: readCounts,
+          backgroundColor: readCounts.map((value) =>
+            value === maxRead ? "rgba(255, 206, 86, 0.8)" : "rgba(153, 102, 255, 0.6)"
+          ),
+        },
+      ];
 
-          const maxDelivered = Math.max(...deliveredCounts);
-          const maxRead = Math.max(...readCounts);
+      setChartData({
+        labels: dayLabels,
+        datasets,
+      });
 
-          const datasets = [
-            {
-              label: "Delivered",
-              data: deliveredCounts,
-              backgroundColor: deliveredCounts.map((value) =>
-                value === maxDelivered ? "rgba(255, 99, 132, 0.8)" : "rgba(75, 192, 192, 0.6)"
-              ),
-            },
-            {
-              label: "Read",
-              data: readCounts,
-              backgroundColor: readCounts.map((value) =>
-                value === maxRead ? "rgba(255, 206, 86, 0.8)" : "rgba(153, 102, 255, 0.6)"
-              ),
-            },
-          ];
-
-          setChartData({
-            labels: dayLabels,
-            datasets,
-          });
-
-          setError(null);
-        }
-      } catch (err) {
-        console.error("Error fetching campaigns:", err);
-        setError("Failed to fetch campaign data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [accountId]);
+      setError(null);
+    } catch (err) {
+      console.error("Error processing campaign data:", err);
+      setError("Failed to process campaign data.");
+    } finally {
+      setLoading(false);
+    }
+  }, [campaigns]);
 
   const options = {
     responsive: true,
@@ -140,13 +127,7 @@ const BarChart = () => {
   };
 
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        maxHeight: "500px",
-      }}
-    >
+    <div style={{ width: "100%", height: "100%", maxHeight: "500px" }}>
       {loading ? (
         <p className="text-gray-400 text-center">Loading chart...</p>
       ) : error ? (

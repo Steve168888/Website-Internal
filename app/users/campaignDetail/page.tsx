@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchCampaignDetail } from "@/services/api"; // Fungsi fetch
+import { fetchCampaignDetail, fetchGenerateCampaignDetails, updateCampaignDetail } from "@/services/api"; // Import fungsi
 import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
 import { FiSend, FiPhone, FiUsers } from "react-icons/fi";
 import { MdOutlineMarkEmailRead } from "react-icons/md";
 import { FaEye } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { useCallback } from "react";
+
 
 interface Campaign {
   campaign_id: string;
@@ -46,50 +48,136 @@ const CampaignDetail = () => {
 
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchCampaignData = async () => {
-      try {
-        setLoading(true);
+  // Fungsi untuk mengambil data campaign detail
+  const fetchCampaignData = useCallback(async () => {
+    try {
+      setLoading(true);
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const campaignId = urlParams.get("campaign_id");
-        const accountId = urlParams.get("account_id");
+      const urlParams = new URLSearchParams(window.location.search);
+      const campaignId = urlParams.get("campaign_id");
+      const accountId = urlParams.get("account_id");
 
-        if (!campaignId || !accountId) {
-          setError("Campaign ID atau Account ID tidak ditemukan.");
-          setLoading(false);
-          return;
-        }
-
-        const {
-          campaign,
-          detailStatuses,
-          details,
-          pagination,
-          error,
-        } = await fetchCampaignDetail(campaignId, accountId, currentPage, itemsPerPage);
-
-        if (error) {
-          setError(error);
-        } else {
-          setCampaign(campaign);
-          setDetailStatuses(detailStatuses);
-          setDetails(details || []);
-          setTotalPages(pagination?.totalPages || 1);
-        }
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message || "Gagal mengambil data campaign.");
-        } else {
-          setError("Terjadi kesalahan yang tidak diketahui.");
-        }
-      } finally {
+      if (!campaignId || !accountId) {
+        setError("Campaign ID atau Account ID tidak ditemukan.");
         setLoading(false);
+        return;
       }
-    };
 
+      const {
+        campaign,
+        detailStatuses,
+        details,
+        pagination,
+        error,
+      } = await fetchCampaignDetail(campaignId, accountId, currentPage, itemsPerPage);
+
+      if (error) {
+        setError(error);
+      } else {
+        setCampaign(campaign);
+        setDetailStatuses(detailStatuses);
+        setDetails(details || []);
+        setTotalPages(pagination?.totalPages || 1);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Gagal mengambil data campaign.");
+      } else {
+        setError("Terjadi kesalahan yang tidak diketahui.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage]); // Tambahkan dependensi yang diperlukan di sini
+
+  // Fungsi untuk generate campaign detail
+  const handleGenerateCampaignDetail = async () => {
+    try {
+      setLoading(true);
+      const urlParams = new URLSearchParams(window.location.search);
+      const campaignId = urlParams.get("campaign_id");
+      const accountId = urlParams.get("account_id");
+
+      if (!campaignId || !accountId) {
+        setError("Campaign ID atau Account ID tidak ditemukan.");
+        return;
+      }
+
+      // Panggil fungsi fetchGenerateCampaignDetails
+      const { data, error } = await fetchGenerateCampaignDetails(campaignId, accountId);
+
+      if (error) {
+        setError(error);
+      } else {
+        // Format data yang diterima dari fetchGenerateCampaignDetails
+        const formattedDetails = data.map((item) => ({
+          recipient: item.recipient,
+          customer: item.name, // Sesuaikan dengan field yang diharapkan
+          status: item.status,
+          message: item.message,
+        }));
+
+        // Perbarui state details
+        setDetails(formattedDetails);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Gagal generate campaign detail.");
+      } else {
+        setError("Terjadi kesalahan yang tidak diketahui.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fungsi untuk update campaign detail
+  const handleUpdateCampaignDetail = async () => {
+    try {
+      setLoading(true);
+
+      // Ambil campaignId dan accountId dari URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const campaignId = urlParams.get("campaign_id");
+      const accountId = urlParams.get("account_id");
+
+      if (!campaignId || !accountId) {
+        setError("Campaign ID atau Account ID tidak ditemukan.");
+        return;
+      }
+
+      // Payload untuk update (contoh: update status dan message)
+      const payload = {
+        status: "Delivered", // Contoh status baru
+        message: "Pesan telah diperbarui", // Contoh pesan baru
+      };
+
+      // Panggil fungsi updateCampaignDetail
+      const { data, error } = await updateCampaignDetail(campaignId, accountId, payload);
+
+      if (error) {
+        setError(error);
+      } else {
+        // Jika berhasil, perbarui state atau tampilkan pesan sukses
+        console.log("Campaign detail berhasil diperbarui:", data);
+        alert("Campaign detail berhasil diperbarui!");
+        // Refresh data campaign detail
+        fetchCampaignData();
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Gagal memperbarui campaign detail.");
+      } else {
+        setError("Terjadi kesalahan yang tidak diketahui.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchCampaignData();
-  }, [currentPage]);
+  }, [fetchCampaignData]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -155,8 +243,7 @@ const CampaignDetail = () => {
       </div>
 
       {/* Statistik */}
-            {/* Statistik */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
         <div className="bg-gray-800 p-4 rounded-lg shadow text-center hover:bg-gray-700 transition-all duration-200">
           <AiOutlineCheckCircle className="text-green-400 text-4xl mx-auto hover:text-green-500 transition-all duration-200" />
           <h2 className="text-lg font-bold mt-4 hover:text-gray-300 transition-all duration-200">DELIVERED</h2>
@@ -198,16 +285,30 @@ const CampaignDetail = () => {
         </div>
       </div>
 
-      {/* Tombol Back */}
-      <button
-        onClick={() => {
-          const accountId = new URLSearchParams(window.location.search).get("account_id");
-          router.push(`/users/campaignList/${accountId}`);
-        }}
-        className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 hover:text-gray-100 transition-all duration-200"
-      >
-        Back
-      </button>
+      {/* Tombol Back, Generate Campaign Detail, dan Update Campaign Detail */}
+      <div className="flex gap-4">
+        <button
+          onClick={() => {
+            const accountId = new URLSearchParams(window.location.search).get("account_id");
+            router.replace(`/users/campaignList/${accountId}`);
+          }}
+          className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 hover:text-gray-100 transition-all duration-200"
+        >
+          Back
+        </button>
+        <button
+          onClick={handleGenerateCampaignDetail}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 hover:text-gray-100 transition-all duration-200"
+        >
+          Generate Campaign Detail
+        </button>
+        <button
+          onClick={handleUpdateCampaignDetail}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 hover:text-gray-100 transition-all duration-200"
+        >
+          Update Campaign Detail
+        </button>
+      </div>
 
       {/* Tabel Detail */}
       <div className="bg-gray-800 text-white rounded-lg shadow-md overflow-hidden mt-6">
@@ -263,7 +364,6 @@ const CampaignDetail = () => {
           </button>
         </div>
       </div>
-      
     </div>
   );
 };

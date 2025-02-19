@@ -21,27 +21,39 @@ const User = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [total_pages, setTotal_pages] = useState<number>(1);
   const [searchValue, setSearchValue] = useState<string>(""); // Gunakan state untuk value
+  const [accounts, setAccounts] = useState<Account[]>([]);
+
 
   const [isModalOpen, setModalOpen] = useState<boolean>(false); // Modal state
-  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const { data, total_pages, error } = await fetchAccount(currentPage, itemsPerPage, "", searchValue); // Gunakan searchValue
-
-      if (error) {
-        setError(error);
-      } else {
-        setUsers(data);
-        setTotal_pages(total_pages);
+  
+      try {
+        const [accountResponse, userResponse] = await Promise.all([
+          fetchAccount(1, 100, ""), // Fetch all accounts untuk Chart
+          fetchAccount(currentPage, 10, searchValue), // Fetch users dengan pagination
+        ]);
+  
+        if (accountResponse.error) throw new Error(accountResponse.error);
+        if (userResponse.error) throw new Error(userResponse.error);
+  
+        setAccounts(accountResponse.data); // Simpan akun untuk dikirim ke Chart
+        setUsers(userResponse.data);
+        setTotal_pages(userResponse.total_pages);
         setError(null);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-
+  
     fetchData();
-  }, [currentPage, searchValue]); // searchValue sebagai dependency
+  }, [currentPage, searchValue]);
+  
+
 
   const handleDelete = async (accountId: string) => {
     if (confirm("Are you sure you want to delete this account?")) {
@@ -180,7 +192,7 @@ const User = () => {
       )}
 
       {/* Chart */}
-      <Chart />
+      <Chart accounts={accounts} />
 
       {/* Modal */}
       {isModalOpen && (

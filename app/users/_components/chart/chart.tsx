@@ -14,7 +14,7 @@ import {
 } from "chart.js";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { fetchAccount, fetchCampaigns } from "@/services/api";
+import { fetchCampaigns } from "@/services/api";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -43,7 +43,12 @@ interface ChartData {
   }[];
 }
 
-const Chart = () => {
+// **Menerima props `accounts` dari User.tsx**
+interface ChartProps {
+  accounts: Account[];
+}
+
+const Chart: React.FC<ChartProps> = ({ accounts }) => {
   const [chartData, setChartData] = useState<ChartData>({
     labels: [],
     datasets: [
@@ -60,7 +65,6 @@ const Chart = () => {
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [endDate, setEndDate] = useState<Date | null>(new Date());
   const [selectedAccount, setSelectedAccount] = useState<string>("all");
-  const [accounts, setAccounts] = useState<Account[]>([]);
   const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -77,7 +81,7 @@ const Chart = () => {
     },
   };
 
-  // Plugin untuk menampilkan teks "No data available" hanya jika loading = false dan tidak ada data
+  // Plugin untuk menampilkan teks "No data available"
   const noDataPlugin: Plugin = {
     id: "noDataPlugin",
     beforeDraw: (chart) => {
@@ -100,21 +104,6 @@ const Chart = () => {
 
   ChartJS.register(noDataPlugin);
 
-  useEffect(() => {
-    const fetchAccountList = async () => {
-      try {
-        const { data, error } = await fetchAccount(1, 100, "");
-        if (error) throw new Error(error);
-
-        setAccounts([{ _id: "all", name: "All Accounts", email: "", balance: 0, campaignCount: 0 }, ...data]);
-      } catch (err) {
-        console.error("Error fetching accounts:", err);
-      }
-    };
-
-    fetchAccountList();
-  }, []);
-
   const fetchCampaignData = useCallback(
     async (accountId: string) => {
       setLoading(true);
@@ -134,33 +123,32 @@ const Chart = () => {
 
   const filterCampaignsByDate = useCallback(() => {
     if (!startDate || !endDate) return;
-  
+
     const groupedCampaigns: Record<string, number> = {};
-  
+
     allCampaigns.forEach((campaign) => {
       const campaignDate = new Date(campaign.created_at).toISOString().split("T")[0];
       const campaignDateObject = new Date(campaign.created_at);
-  
+
       const startDateObject = new Date(startDate);
-      startDateObject.setHours(0, 0, 0, 0); // Set startDate ke awal hari
-  
+      startDateObject.setHours(0, 0, 0, 0);
+
       const endDateObject = new Date(endDate);
-      endDateObject.setHours(23, 59, 59, 999); // Set endDate ke akhir hari
-  
-      // Pastikan kampanye masuk dalam rentang waktu
+      endDateObject.setHours(23, 59, 59, 999);
+
       if (campaignDateObject >= startDateObject && campaignDateObject <= endDateObject) {
         groupedCampaigns[campaignDate] = (groupedCampaigns[campaignDate] || 0) + 1;
       }
     });
-  
+
     const labels = Object.keys(groupedCampaigns).sort();
     const data = labels.map((label) => groupedCampaigns[label]);
-  
+
     const selectedAccountName =
       selectedAccount === "all"
         ? "All Accounts"
         : accounts.find((acc) => acc._id === selectedAccount)?.name || "Unknown Account";
-  
+
     setChartData({
       labels,
       datasets: [
@@ -174,7 +162,6 @@ const Chart = () => {
       ],
     });
   }, [allCampaigns, startDate, endDate, selectedAccount, accounts]);
-  
 
   const handleAccountChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const accountId = e.target.value;

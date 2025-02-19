@@ -1,4 +1,5 @@
-//const BASE_URL = 'https://a33fa46a-804b-471f-bd62-b4d4b4207cb2-00-xxvnqidktbm3.sisko.replit.dev/api/v1';
+//const BASE_URL = 'https://thesis-production-f387.up.railway.app/api/v1';
+//const BASE_URL = 'https://ffe5b3a5-59aa-4a79-89fe-0cb5765d4819-00-1v07mi4hw82zc.pike.replit.dev/api/v1';
 const BASE_URL = 'http://localhost:5001/api/v1';
 
 export const fetchAPI = async <T>(

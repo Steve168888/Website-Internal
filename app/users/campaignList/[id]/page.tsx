@@ -192,6 +192,8 @@ const CampaignList = () => {
         )}
       </div>
 
+      
+
       {/* ChartAnalytics */}
       <div className="mt-6">
         <ChartAnalytics />

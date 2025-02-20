@@ -73,15 +73,19 @@ const Sidebar = () => {
             <FiUser className="text-xl" />
             <span>Account</span>
           </Link>
-          <Link
-            href="/auth/login"
-            className={`flex items-center space-x-2 p-2 rounded ${isActive(
-              "/auth/login"
-            )}`}
+
+          <button
+            onClick={() => {
+              localStorage.removeItem("adminId"); // Hapus sesi pengguna
+              localStorage.removeItem("token"); // Jika menggunakan token
+              window.location.href = "/auth/login"; // Redirect ke login
+            }}
+            className="flex items-center space-x-2 p-2 rounded hover:bg-gray-700 text-white w-full text-left"
           >
             <FiLogOut className="text-xl" />
             <span>Logout</span>
-          </Link>
+          </button>
+          
         </nav>
       </div>
       <div className="p-4 border-t border-gray-700">

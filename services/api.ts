@@ -83,7 +83,7 @@ interface Account {
 export const fetchAccount = async (
   page: number,
   limit: number,
-  value: string = "" // Hanya pakai value, tanpa search
+  value: string = "", // Hanya pakai value, tanpa search
 ): Promise<{
   data: Account[];
   total_pages: number;
@@ -292,7 +292,7 @@ export const fetchAllCampaigns = async (
   limit: number | null = null, // Limit null berarti ambil semua data
   search: string = "",
   order?: string, // Parameter opsional
-  sort?: number // Parameter opsional
+  sort?: number, // Parameter opsional
 ): Promise<{
   data: Campaign[];
   total: number;
@@ -603,11 +603,8 @@ export const createAccount = async (
 
 
 export const deleteAccount = async (
-  accountId: string // ID akun yang ingin dihapus
-): Promise<{
-  success: boolean;
-  message: string;
-}> => {
+  accountId: string
+): Promise<{ success: boolean; message: string }> => {
   try {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -618,10 +615,7 @@ export const deleteAccount = async (
     }
 
     const endpoint = `account/delete/${accountId}`;
-    const response = await fetchAPI<{
-      success: boolean;
-      message: string;
-    }>(endpoint, {
+    const response = await fetchAPI<{ message: string }>(endpoint, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -629,22 +623,16 @@ export const deleteAccount = async (
       },
     });
 
-    if (response.success) {
-      return {
-        success: true,
-        message: response.message || "Akun berhasil dihapus.",
-      };
+    console.log("Delete response:", response); // Debugging log
+
+    // **Cek apakah API sukses dari pesan yang dikembalikan**
+    if (response && response.message.includes("successfully")) {
+      return { success: true, message: response.message };
     }
 
-    return {
-      success: false,
-      message: response.message || "Gagal menghapus akun.",
-    };
+    return { success: false, message: response.message || "Gagal menghapus akun." };
   } catch (error) {
-    console.error("Error in deleteAccount:", { error, accountId });
-    if (error instanceof Error) {
-      return { success: false, message: error.message };
-    }
+    console.error("Error in deleteAccount:", error);
     return { success: false, message: "Terjadi kesalahan yang tidak diketahui." };
   }
 };

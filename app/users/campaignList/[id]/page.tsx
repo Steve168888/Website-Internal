@@ -6,6 +6,7 @@ import { fetchCampaigns, deleteCampaign, fetchGenerateCampaign } from "@/service
 import { handlePagination, handleSearch, HidePagination } from "@/services/utils";
 import { useParams, useRouter } from "next/navigation";
 import ChartAnalytics from "./chartAnalytics/chartAnalytics";
+import Swal from "sweetalert2";
 
 interface Campaign {
   campaign_id: string;
@@ -68,7 +69,7 @@ const CampaignList = () => {
     };
 
     fetchData();
-  }, [id, currentPage, valueTerm]);
+  }, [id, currentPage, valueTerm, campaigns.length]);
 
   // Fetch semua data campaign untuk ChartAnalytics
   useEffect(() => {
@@ -95,44 +96,109 @@ const CampaignList = () => {
   const hidePagination = HidePagination(campaigns.length, totalPages, undefined);
 
   const handleDelete = async (campaignId: string) => {
-    if (confirm("Are you sure you want to delete this campaign?")) {
-      const result = await deleteCampaign(campaignId, id);
-      if (result.success) {
-        alert("Campaign deleted successfully!");
-        setCampaigns((prev) => prev.filter((campaign) => campaign.campaign_id !== campaignId));
-        setTotalCampaigns((prev) => prev - 1);
-        setAllCampaigns((prev) => prev.filter((campaign) => campaign.campaign_id !== campaignId));
-      } else {
-        alert(`Failed to delete campaign: ${result.message}`);
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this action!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+      background: "#1e293b",
+      color: "#f8fafc",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          console.log(`Attempting to delete campaign: ${campaignId}, for account: ${id}`);
+  
+          const response = await deleteCampaign(campaignId, id);
+  
+          
+          console.log("Delete campaign response:", response);
+  
+          
+          if (!response || typeof response !== "object" || !response.message) {
+            throw new Error("Invalid response from server.");
+          }
+          
+          setCampaigns((prev) => prev.filter((campaign) => campaign.campaign_id !== campaignId));
+          setAllCampaigns((prev) => prev.filter((campaign) => campaign.campaign_id !== campaignId));
+          setTotalCampaigns((prev) => (prev > 0 ? prev - 1 : 0));
+  
+          Swal.fire({
+            title: "Deleted!",
+            text: response.message || "Campaign has been deleted successfully.",
+            icon: "success",
+            background: "#1e293b",
+            color: "#f8fafc",
+          });
+  
+        } catch (error) {
+          console.error("Delete campaign error:", error);
+  
+          Swal.fire({
+            title: "Error!",
+            text: error instanceof Error ? error.message : "An unexpected error occurred while deleting the campaign.",
+            icon: "error",
+            background: "#1e293b",
+            color: "#f8fafc",
+          });
+        }
       }
-    }
+    });
   };
-
-  // Fungsi untuk generate campaign
+  
+  
+  
   const handleGenerateCampaign = async () => {
     if (!id) {
-      alert("Invalid account ID.");
+      Swal.fire({
+        title: "Error!",
+        text: "Invalid account ID.",
+        icon: "error",
+        background: "#1e293b",
+        color: "#f8fafc",
+      });
       return;
     }
-
+  
     try {
       const result = await fetchGenerateCampaign(id);
+  
       if (result.success) {
-        alert("Campaign generated successfully!");
-        // Refresh data campaign setelah generate
-        const { data } = await fetchCampaigns(id, currentPage, itemsPerPage, valueTerm);
-        setCampaigns(data);
-        // Refresh semua data untuk ChartAnalytics
-        const { data: allData } = await fetchCampaigns(id, 1, 1000, "");
-        setAllCampaigns(allData);
+        await Swal.fire({
+          title: "Success!",
+          text: "Campaign generated successfully!",
+          icon: "success",
+          background: "#1e293b",
+          color: "#f8fafc",
+        });
+  
+        // ✅ Reload halaman setelah Swal sukses
+        window.location.reload();
       } else {
-        alert(`Failed to generate campaign: ${result.message}`);
+        Swal.fire({
+          title: "Error!",
+          text: `Failed to generate campaign: ${result.message}`,
+          icon: "error",
+          background: "#1e293b",
+          color: "#f8fafc",
+        });
       }
     } catch (error) {
       console.error("Error generating campaign:", error);
-      alert("An unexpected error occurred while generating the campaign.");
+  
+      Swal.fire({
+        title: "Error!",
+        text: "An unexpected error occurred while generating the campaign.",
+        icon: "error",
+        background: "#1e293b",
+        color: "#f8fafc",
+      });
     }
   };
+  
+  
 
   if (loading) return <div className="text-center text-white">Loading...</div>;
   if (error) return <div className="text-center text-red-500 font-bold">{error}</div>;

@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchCampaignDetail, fetchGenerateCampaignDetails, updateCampaignDetail } from "@/services/api"; // Import fungsi
+import { fetchCampaignDetail, fetchGenerateCampaignDetails, updateCampaignDetail } from "@/services/api";
 import { AiOutlineCheckCircle, AiOutlineCloseCircle } from "react-icons/ai";
 import { FiSend, FiPhone, FiUsers } from "react-icons/fi";
 import { MdOutlineMarkEmailRead } from "react-icons/md";
 import { FaEye } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
-
+import Swal from "sweetalert2";
 
 interface Campaign {
   campaign_id: string;
@@ -40,11 +40,13 @@ const CampaignDetail = () => {
   const [details, setDetails] = useState<Detail[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [generateButtonDisabled, setGenerateButtonDisabled] = useState<boolean>(false);
+  const [updateButtonDisabled, setUpdateButtonDisabled] = useState<boolean>(true);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const itemsPerPage = 10; // Number of items per page
+  const itemsPerPage = 10;
 
   const router = useRouter();
 
@@ -78,6 +80,33 @@ const CampaignDetail = () => {
         setDetailStatuses(detailStatuses);
         setDetails(details || []);
         setTotalPages(pagination?.totalPages || 1);
+
+        // Cek apakah data sudah di-generate atau belum
+        if (details && details.length > 0) {
+          const allPending = details.every((detail) => detail.status.toLowerCase() === "pending");
+          const allUpdated = details.every(
+            (detail) => ["sent", "delivered", "read", "failed"].includes(detail.status.toLowerCase())
+          );
+        
+          if (allPending) {
+            // Semua masih Pending ➝ Generate Disabled, Update Enabled
+            setGenerateButtonDisabled(true);
+            setUpdateButtonDisabled(false);
+          } else if (allUpdated) {
+            // Semua sudah berubah ke status akhir ➝ Semua tombol Disabled
+            setGenerateButtonDisabled(true);
+            setUpdateButtonDisabled(true);
+          } else {
+            // Status campuran ➝ Generate tetap Disabled, Update tetap Enabled
+            setGenerateButtonDisabled(true);
+            setUpdateButtonDisabled(false);
+          }
+        } else {
+          // Tidak ada data ➝ Generate Enabled, Update Disabled
+          setGenerateButtonDisabled(false);
+          setUpdateButtonDisabled(true);
+        }
+        
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -88,97 +117,115 @@ const CampaignDetail = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage]); // Tambahkan dependensi yang diperlukan di sini
+  }, [currentPage]);
 
-  // Fungsi untuk generate campaign detail
+
   const handleGenerateCampaignDetail = async () => {
     try {
       setLoading(true);
+      setGenerateButtonDisabled(true);
+  
       const urlParams = new URLSearchParams(window.location.search);
       const campaignId = urlParams.get("campaign_id");
       const accountId = urlParams.get("account_id");
-
+  
       if (!campaignId || !accountId) {
         setError("Campaign ID atau Account ID tidak ditemukan.");
         return;
       }
-
-      // Panggil fungsi fetchGenerateCampaignDetails
+  
       const { data, error } = await fetchGenerateCampaignDetails(campaignId, accountId);
-
+  
       if (error) {
         setError(error);
+        setGenerateButtonDisabled(false);
       } else {
-        // Format data yang diterima dari fetchGenerateCampaignDetails
-        const formattedDetails = data.map((item) => ({
-          recipient: item.recipient,
-          customer: item.name, // Sesuaikan dengan field yang diharapkan
-          status: item.status,
-          message: item.message,
-        }));
-
-        // Perbarui state details
-        setDetails(formattedDetails);
+        console.log("Generate Campaign Detail Response:", data);
+  
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+    
+        await fetchCampaignData();
+                
+        setGenerateButtonDisabled(true);
+        setUpdateButtonDisabled(false);
+        
+        Swal.fire({
+          title: "Success!",
+          text: "Campaign detail generated successfully!",
+          icon: "success",
+          background: "#1e293b",
+          color: "#f8fafc",
+        });
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || "Gagal generate campaign detail.");
-      } else {
-        setError("Terjadi kesalahan yang tidak diketahui.");
-      }
+      console.error("Error generating campaign detail:", err);
+      setGenerateButtonDisabled(false);
+      setError("Terjadi kesalahan saat generate campaign detail.");
     } finally {
       setLoading(false);
     }
   };
-
-  // Fungsi untuk update campaign detail
+  
   const handleUpdateCampaignDetail = async () => {
     try {
       setLoading(true);
-
-      // Ambil campaignId dan accountId dari URL
+    
       const urlParams = new URLSearchParams(window.location.search);
       const campaignId = urlParams.get("campaign_id");
       const accountId = urlParams.get("account_id");
-
+    
       if (!campaignId || !accountId) {
         setError("Campaign ID atau Account ID tidak ditemukan.");
         return;
       }
-
-      // Payload untuk update (contoh: update status dan message)
+    
       const payload = {
-        status: "Delivered", // Contoh status baru
-        message: "Pesan telah diperbarui", // Contoh pesan baru
+        status: "Delivered",
+        message: "Pesan telah diperbarui",
       };
-
-      // Panggil fungsi updateCampaignDetail
-      const { data, error } = await updateCampaignDetail(campaignId, accountId, payload);
-
-      if (error) {
-        setError(error);
-      } else {
-        // Jika berhasil, perbarui state atau tampilkan pesan sukses
-        console.log("Campaign detail berhasil diperbarui:", data);
-        alert("Campaign detail berhasil diperbarui!");
-        // Refresh data campaign detail
-        fetchCampaignData();
+    
+      const response = await updateCampaignDetail(campaignId, accountId, payload);
+      
+      console.log("Response dari API:", response);
+  
+      if (!response || Object.keys(response).length === 0) {
+        console.warn("API tidak mengembalikan data, hanya status 200 OK.");
       }
+
+      setError(null);
+      await fetchCampaignData();
+  
+      Swal.fire({
+        title: "Success!",
+        text: "Campaign detail updated successfully!",
+        icon: "success",
+        background: "#1e293b",
+        color: "#f8fafc",
+      });
+  
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || "Gagal memperbarui campaign detail.");
-      } else {
-        setError("Terjadi kesalahan yang tidak diketahui.");
-      }
+      const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan yang tidak diketahui.";
+      setError(errorMessage);
+  
+      Swal.fire({
+        title: "Error!",
+        text: errorMessage,
+        icon: "error",
+        background: "#1e293b",
+        color: "#f8fafc",
+      });
+  
     } finally {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     fetchCampaignData();
   }, [fetchCampaignData]);
 
+  
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "delivered":
@@ -298,13 +345,19 @@ const CampaignDetail = () => {
         </button>
         <button
           onClick={handleGenerateCampaignDetail}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 hover:text-gray-100 transition-all duration-200"
+          disabled={generateButtonDisabled}
+          className={`px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 hover:text-gray-100 transition-all duration-200 ${
+            generateButtonDisabled ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           Generate Campaign Detail
         </button>
         <button
           onClick={handleUpdateCampaignDetail}
-          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 hover:text-gray-100 transition-all duration-200"
+          disabled={updateButtonDisabled}
+          className={`px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 hover:text-gray-100 transition-all duration-200 ${
+            updateButtonDisabled ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           Update Campaign Detail
         </button>

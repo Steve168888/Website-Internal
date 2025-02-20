@@ -35,13 +35,13 @@ const Dashboard = () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) return;
-
+  
         // Fetch data secara paralel menggunakan Promise.all
         const [accountRes, campaignsRes] = await Promise.all([
           fetchAccount(1, 10, ""),
-          fetchAllCampaigns(1, 1000, ""), // Ambil semua campaign untuk total & sorting
+          fetchAllCampaigns(1, 100, ""), // Ambil semua campaign untuk total & sorting
         ]);
-
+  
         // Set total accounts
         if (accountRes.error) {
           setError(accountRes.error);
@@ -62,8 +62,8 @@ const Dashboard = () => {
           const sortedCampaigns = allCampaigns
             .sort((a: Campaign, b: Campaign) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
             .slice(0, 5); // Ambil 5 campaign terbaru
-
-          setLatestCampaigns(sortedCampaigns);
+  
+        setLatestCampaigns(sortedCampaigns);
         }
       } catch (err) {
         setError("Terjadi kesalahan dalam mengambil data.");
@@ -72,7 +72,7 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
+  
     fetchData();
   }, []);
 
@@ -94,7 +94,6 @@ const Dashboard = () => {
               ) : (
                 <p className="text-white text-2xl font-bold">{totalAccounts.toLocaleString()}</p>
               )}
-              <p className="text-green-500 text-sm">+17% lebih banyak dari minggu lalu</p>
             </div>
           </div>
         </Link>
@@ -109,7 +108,6 @@ const Dashboard = () => {
               ) : (
                 <p className="text-white text-2xl font-bold">{totalCampaigns.toLocaleString()}</p>
               )}
-              <p className="text-green-500 text-sm">+5% lebih banyak dari minggu lalu</p>
             </div>
           </div>
         </Link>

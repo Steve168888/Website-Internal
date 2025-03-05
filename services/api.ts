@@ -9,17 +9,17 @@ export const fetchAPI = async <T>(
   try {
     const response = await fetch(`${BASE_URL}/${endpoint}`, options);
 
-    // Parsing error JSON saat respons tidak OK
+ 
     if (!response.ok) {
-      const errorData = await response.json(); // Parsing pesan error dari server
+      const errorData = await response.json(); 
       throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
     }
 
-    // Parsing respons JSON jika sukses
+  
     return await response.json();
   } catch (error) {
     console.error(`Error fetching ${endpoint}:`, error);
-    throw error; // Lempar error ke login form untuk penanganan
+    throw error;
   }
 };
 
@@ -289,10 +289,10 @@ interface Campaign {
 
 export const fetchAllCampaigns = async (
   page: number = 1,
-  limit: number | null = null, // Limit null berarti ambil semua data
+  limit: number | null = null, 
   search: string = "",
-  order?: string, // Parameter opsional
-  sort?: number, // Parameter opsional
+  order?: string, 
+  sort?: number, 
 ): Promise<{
   data: Campaign[];
   total: number;
